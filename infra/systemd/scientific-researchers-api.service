@@ -1,0 +1,37 @@
+[Unit]
+Description=Scientific Researchers Django API (gunicorn)
+After=network.target
+Wants=network-online.target
+ConditionPathIsSymbolicLink=/opt/scientific-researchers/current
+
+[Service]
+Type=simple
+User=sr
+Group=sr
+WorkingDirectory=/opt/scientific-researchers/current/backend
+EnvironmentFile=/etc/scientific-researchers/env
+Environment=DJANGO_SETTINGS_MODULE=config.settings
+ExecStart=/opt/scientific-researchers/shared/venv/bin/gunicorn \
+	config.wsgi:application \
+	--bind 127.0.0.1:8007 \
+	--workers 2 \
+	--threads 2 \
+	--timeout 60 \
+	--graceful-timeout 30 \
+	--access-logfile - \
+	--error-logfile -
+ExecReload=/bin/kill -s HUP $MAINPID
+Restart=always
+RestartSec=3
+TimeoutStopSec=30
+KillMode=mixed
+
+# gunicorn --bind 127.0.0.1 keeps the API off the public interface; Caddy is the only edge.
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+ProtectHome=true
+ReadWritePaths=/opt/scientific-researchers
+
+[Install]
+WantedBy=multi-user.target

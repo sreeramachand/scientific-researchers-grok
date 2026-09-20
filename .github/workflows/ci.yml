@@ -1,0 +1,87 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  frontend:
+    name: Frontend (Astro)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+        env:
+          PUBLIC_WEB3FORMS_ACCESS_KEY: ${{ vars.PUBLIC_WEB3FORMS_ACCESS_KEY }}
+          PUBLIC_SNIPCART_API_KEY: ${{ vars.PUBLIC_SNIPCART_API_KEY }}
+          PUBLIC_BUYMEACOFFEE_URL: ${{ vars.PUBLIC_BUYMEACOFFEE_URL }}
+          PUBLIC_NEON_AUTH_URL: ${{ vars.PUBLIC_NEON_AUTH_URL }}
+          PUBLIC_API_URL: ${{ vars.PUBLIC_API_URL || 'http://127.0.0.1:8007' }}
+
+  backend:
+    name: Backend (Django)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: backend/requirements.txt
+
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Django system check
+        run: python manage.py check
+        env:
+          DJANGO_DEBUG: "true"
+          DJANGO_SECRET_KEY: ci-only-not-for-production
+
+      - name: Migration completeness
+        run: python manage.py makemigrations --check --dry-run
+        env:
+          DJANGO_DEBUG: "true"
+          DJANGO_SECRET_KEY: ci-only-not-for-production
+
+      - name: Apply migrations (SQLite)
+        run: python manage.py migrate --noinput
+        env:
+          DJANGO_DEBUG: "true"
+          DJANGO_SECRET_KEY: ci-only-not-for-production
+
+      - name: Tests
+        run: python manage.py test --verbosity=2
+        env:
+          DJANGO_DEBUG: "true"
+          DJANGO_SECRET_KEY: ci-only-not-for-production

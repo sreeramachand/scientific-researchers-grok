@@ -1,0 +1,4 @@
+# Install as /etc/sudoers.d/scientific-researchers (mode 0440).
+# The deploy user (`sr` by default) can restart app units without a password.
+
+sr ALL=(root) NOPASSWD: /bin/systemctl restart scientific-researchers-api, /bin/systemctl reload scientific-researchers-api, /bin/systemctl is-active scientific-researchers-api, /bin/systemctl reload caddy, /bin/systemctl restart caddy, /bin/systemctl is-active caddy, /usr/local/sbin/sr-refresh-caddy
