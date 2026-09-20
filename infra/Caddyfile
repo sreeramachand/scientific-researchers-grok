@@ -1,0 +1,54 @@
+{
+	# Let's Encrypt account email. Set ACME_EMAIL on the VPS (see infra/env.production.example).
+	email {$ACME_EMAIL}
+}
+
+# Optional www → apex redirect. Only enable this block if a www DNS record exists,
+# otherwise Caddy will fail to obtain a certificate for www.
+# www.{$SITE_DOMAIN} {
+# 	redir https://{$SITE_DOMAIN}{uri} permanent
+# }
+
+{$SITE_DOMAIN} {
+	encode gzip zstd
+
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options nosniff
+		Referrer-Policy strict-origin-when-cross-origin
+		-Server
+	}
+
+	# Django API (gunicorn on loopback). Paths already start with /api/.
+	handle /api/* {
+		reverse_proxy 127.0.0.1:8007 {
+			header_up X-Forwarded-Proto {scheme}
+			header_up X-Forwarded-For {remote_ip}
+			header_up X-Forwarded-Host {host}
+		}
+	}
+
+	# Django admin + WhiteNoise-served /static/.
+	handle /admin* {
+		reverse_proxy 127.0.0.1:8007 {
+			header_up X-Forwarded-Proto {scheme}
+			header_up X-Forwarded-For {remote_ip}
+			header_up X-Forwarded-Host {host}
+		}
+	}
+
+	handle /static/* {
+		reverse_proxy 127.0.0.1:8007 {
+			header_up X-Forwarded-Proto {scheme}
+			header_up X-Forwarded-For {remote_ip}
+			header_up X-Forwarded-Host {host}
+		}
+	}
+
+	# Astro static build (frontend/dist rsynced to SITE_ROOT).
+	handle {
+		root * {$SITE_ROOT}
+		try_files {path} {path}/ /404.html
+		file_server
+	}
+}

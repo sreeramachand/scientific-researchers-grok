@@ -94,17 +94,26 @@ API routes:
 
 Place production PDFs in `frontend/public/papers/` using the file names in `frontend/public/papers/README.md`. Placeholder PDFs ship so the paywall preview has something to open after unlock.
 
-## Deploy
+## Deploy (single VPS)
 
-1. Build the frontend (`npm run build` in `frontend/`) and host `frontend/dist` on any static host (Netlify, Cloudflare Pages, S3+CDN, nginx).
-2. Set the `PUBLIC_*` variables at build time so Astro inlines them.
-3. Run Django with gunicorn behind TLS, with `DATABASE_URL` pointed at Neon and `DJANGO_DEBUG=false`.
-4. Configure Snipcart allowed domains, Web3Forms domain, Buy Me A Coffee URL, and Neon Auth trusted domains to the production origin.
-5. Point `PUBLIC_API_URL` and `CORS_ALLOWED_ORIGINS` at those production hosts.
+Production is one VPS: **Caddy** (Let’s Encrypt + reverse proxy), **Astro** static files on disk, and **Django** under gunicorn on loopback. See **[docs/deploy-vps.md](docs/deploy-vps.md)** for provisioning, DNS, GitHub Actions SSH secrets, first deploy, and rollback.
 
-Example gunicorn command:
+```bash
+# On a fresh Ubuntu/Debian VPS (as root), after cloning this repo:
+SITE_DOMAIN=scientificresearchers.org ACME_EMAIL=you@scientificresearchers.org \
+  bash infra/deploy/install.sh
+```
+
+GitHub Actions:
+
+- `.github/workflows/ci.yml` — pull requests: `astro build` and Django `check` / migration / tests
+- `.github/workflows/deploy.yml` — push to `main` or **Run workflow**: build artifacts and rsync over SSH
+
+Required GitHub secrets: `VPS_SSH_KEY` (and usually `VPS_HOST` / `VPS_USER` if those are not variables). Django secrets (`DATABASE_URL`, `DJANGO_SECRET_KEY`) stay in `/etc/scientific-researchers/env` on the server.
+
+Local gunicorn (dev machine, no Caddy):
 
 ```bash
 cd backend
-gunicorn config.wsgi:application --bind 0.0.0.0:8007
+gunicorn config.wsgi:application --bind 127.0.0.1:8007
 ```

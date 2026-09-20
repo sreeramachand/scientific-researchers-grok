@@ -1,0 +1,23 @@
+# Local Caddy in front of `npm run dev` / `astro preview` and `manage.py runserver`.
+# Does not request certificates. Run from the repo root:
+#   caddy run --config infra/Caddyfile.local
+#
+# Then open http://127.0.0.1:2080
+
+http://127.0.0.1:2080 {
+	handle /api/* {
+		reverse_proxy 127.0.0.1:8007
+	}
+
+	handle /admin* {
+		reverse_proxy 127.0.0.1:8007
+	}
+
+	handle /static/* {
+		reverse_proxy 127.0.0.1:8007
+	}
+
+	handle {
+		reverse_proxy 127.0.0.1:43147
+	}
+}
