@@ -1,0 +1,74 @@
+---
+import { pricing } from "../data/site";
+import { env } from "../lib/env";
+---
+
+<section id="pricing" class="mx-auto max-w-6xl px-4 py-16 lg:px-6">
+  <div class="max-w-2xl">
+    <p class="text-sm font-bold uppercase tracking-[0.16em] text-brand-600">Access</p>
+    <h2 class="mt-2 font-serif text-3xl tracking-tight sm:text-4xl">Read what you need. Subscribe when you want the catalog.</h2>
+    <p class="mt-3 text-slate-600">
+      Community Services, Professional Development, Awards, Home, and Contact stay free. Only project paper PDFs sit behind Snipcart.
+    </p>
+  </div>
+  <div class="mt-10 grid gap-5 md:grid-cols-2 xl:grid-cols-4">
+    {pricing.map((tier) => (
+      <article class:list={["card flex flex-col p-6", tier.highlighted && "ring-2 ring-brand-500"]}>
+        <p class="text-sm font-bold text-brand-700">{tier.name}</p>
+        <p class="mt-3 font-serif text-4xl">
+          {tier.price === 0 ? "Free" : `$${tier.price}`}
+          {tier.price > 0 && <span class="text-base font-sans font-medium text-slate-500">/{tier.cadence}</span>}
+        </p>
+        <p class="mt-3 text-sm leading-6 text-slate-600">{tier.description}</p>
+        <ul class="mt-5 flex-1 space-y-2 text-sm text-slate-700">
+          {tier.features.map((feature) => <li class="flex gap-2"><span class="text-brand-600">✓</span>{feature}</li>)}
+        </ul>
+        {tier.snipcart ? (
+          <button
+            type="button"
+            class:list={["btn mt-6 w-full", tier.highlighted ? "btn-primary snipcart-add-item" : "btn-secondary snipcart-add-item"]}
+            data-item-id={tier.sku}
+            data-item-name={`${tier.name} subscription`}
+            data-item-price={tier.price}
+            data-item-url="/"
+            data-item-description={tier.description}
+            data-item-payment-interval={tier.interval}
+            data-item-payment-interval-count="1"
+            data-subscribe-sku={tier.sku}
+            data-subscribe-name={tier.name}
+            data-subscribe-interval={tier.interval}
+          >
+            {tier.cta}
+          </button>
+        ) : (
+          <a class:list={["btn mt-6 w-full", tier.highlighted ? "btn-primary" : "btn-secondary"]} href={tier.href}>
+            {tier.cta}
+          </a>
+        )}
+      </article>
+    ))}
+  </div>
+  {!env.snipcartKey && (
+    <p class="mt-4 text-sm text-slate-500">
+      Snipcart is not configured. Subscription buttons record a local demo entitlement so you can preview the paywall. Add <code>PUBLIC_SNIPCART_API_KEY</code> for live checkout.
+    </p>
+  )}
+</section>
+
+<script>
+  import { grantSubscription } from "../lib/entitlements";
+
+  const key = (import.meta.env.PUBLIC_SNIPCART_API_KEY as string | undefined)?.trim();
+  if (!key) {
+    document.querySelectorAll<HTMLButtonElement>("[data-subscribe-sku]").forEach((button) => {
+      button.addEventListener("click", () => {
+        grantSubscription({
+          sku: button.dataset.subscribeSku ?? "sub",
+          name: button.dataset.subscribeName ?? "Subscription",
+          interval: button.dataset.subscribeInterval ?? "Month",
+        });
+        window.alert("Demo subscription activated in this browser. Project PDFs are unlocked while it remains active.");
+      });
+    });
+  }
+</script>

@@ -1,0 +1,110 @@
+---
+import type { Paper } from "../data/papers";
+import { categoryMeta } from "../data/papers";
+import { env } from "../lib/env";
+import BaseLayout from "../layouts/BaseLayout.astro";
+
+type Props = { paper: Paper };
+const { paper } = Astro.props;
+const category = categoryMeta[paper.category];
+---
+
+<BaseLayout title={paper.title} description={paper.abstract}>
+  <article class="mx-auto max-w-6xl px-4 py-10 lg:px-6">
+    <p class="text-sm font-semibold text-brand-700">
+      <a href="/projects">Projects</a>
+      <span class="text-slate-400"> / </span>
+      <a href={category.href}>{category.label}</a>
+    </p>
+    <h1 class="mt-3 font-serif text-4xl tracking-tight sm:text-5xl">{paper.title}</h1>
+    <p class="mt-3 text-lg text-slate-600">{paper.subtitle}</p>
+    <p class="mt-4 text-sm text-slate-500">{paper.authors} · {paper.year} · DOI {paper.doi}</p>
+
+    <div class="mt-8 grid gap-8 lg:grid-cols-[1.4fr_0.8fr]">
+      <div class="prose-sr">
+        <h2>Abstract</h2>
+        <p>{paper.abstract}</p>
+        <h2>Highlights</h2>
+        <ul>
+          {paper.highlights.map((item) => <li>{item}</li>)}
+        </ul>
+        <h2>Methods summary</h2>
+        <p>{paper.methods}</p>
+      </div>
+      <aside class="card h-fit p-6">
+        <p class="text-sm font-bold uppercase tracking-wide text-slate-500">Full paper</p>
+        <p class="mt-2 font-serif text-3xl">${paper.price}</p>
+        <p class="mt-2 text-sm text-slate-600">One-time purchase, or unlock with an active Researcher or Lab subscription.</p>
+        <button
+          type="button"
+          class="btn btn-primary snipcart-add-item mt-5 w-full"
+          data-item-id={paper.sku}
+          data-item-price={paper.price}
+          data-item-url={Astro.url.pathname}
+          data-item-name={paper.title}
+          data-item-description={paper.subtitle}
+          data-item-file-guid={paper.slug}
+          data-paper-sku={paper.sku}
+        >
+          Purchase PDF
+        </button>
+        <a class="btn btn-secondary mt-3 w-full" href="/#pricing">See subscriptions</a>
+        {!env.snipcartKey && (
+          <p class="mt-3 text-xs text-slate-500">Demo mode: the purchase button unlocks this PDF in your browser when Snipcart is not configured.</p>
+        )}
+      </aside>
+    </div>
+
+    <section class="mt-12">
+      <h2 class="font-serif text-2xl">PDF preview</h2>
+      <div id="paywall" class="relative mt-4 overflow-hidden rounded-2xl border border-slate-200 bg-slate-50" data-sku={paper.sku} data-src={paper.pdfPath}>
+        <div id="locked-layer" class="absolute inset-0 z-10 grid place-items-center bg-white/80 p-6 text-center backdrop-blur-sm">
+          <div class="max-w-md">
+            <p class="font-serif text-2xl">This PDF is locked</p>
+            <p class="mt-2 text-slate-600">The abstract above is free. Purchase this paper or keep an active subscription to open the file.</p>
+            <button type="button" class="btn btn-primary mt-5" data-paper-sku={paper.sku} id="unlock-cta">Unlock this paper</button>
+          </div>
+        </div>
+        <iframe id="pdf-frame" title={`${paper.title} PDF`} class="h-[70vh] w-full bg-white" src=""></iframe>
+      </div>
+    </section>
+  </article>
+</BaseLayout>
+
+<script>
+  import { grantPaper, hasAccess } from "../lib/entitlements";
+
+  const root = document.getElementById("paywall");
+  const frame = document.getElementById("pdf-frame") as HTMLIFrameElement | null;
+  const lock = document.getElementById("locked-layer");
+  const sku = root?.dataset.sku ?? "";
+  const src = root?.dataset.src ?? "";
+  const key = (import.meta.env.PUBLIC_SNIPCART_API_KEY as string | undefined)?.trim();
+
+  function reveal() {
+    if (!hasAccess(sku)) return;
+    if (frame) frame.src = src;
+    lock?.classList.add("hidden");
+  }
+
+  function buy() {
+    if (!key) {
+      grantPaper(sku);
+      reveal();
+      return;
+    }
+    document.querySelector<HTMLButtonElement>(`.snipcart-add-item[data-paper-sku="${sku}"]`)?.click();
+  }
+
+  document.querySelectorAll<HTMLButtonElement>(`[data-paper-sku="${sku}"]`).forEach((button) => {
+    if (!key) {
+      button.addEventListener("click", (event) => {
+        event.preventDefault();
+        buy();
+      });
+    }
+  });
+
+  document.addEventListener("sr-entitlements-changed", reveal);
+  reveal();
+</script>

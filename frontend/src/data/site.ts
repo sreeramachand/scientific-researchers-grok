@@ -1,0 +1,145 @@
+export const site = {
+  name: "Scientific Researchers",
+  tagline: "Publication and research across biomedical AI, visual science, and cancer.",
+  description:
+    "Scientific Researchers is a publication and research company. We publish computational and clinical papers, host community STEAM programs, run professional development, and administer research awards.",
+  url: "https://scientificresearchers.org",
+  email: "hello@scientificresearchers.org",
+  demoAuthNotice:
+    "Neon Auth keys are not configured. This local demo stores a session in your browser only.",
+};
+
+export const pricing = [
+  {
+    id: "free",
+    name: "Free",
+    price: 0,
+    cadence: "always",
+    description: "Open abstracts, community programs, awards, and professional-development pages.",
+    features: [
+      "Full access to Community Services",
+      "Professional Development articles, posters, and webinars",
+      "Awards nomination materials and FAQ",
+      "Paper abstracts and methods summaries",
+    ],
+    cta: "Browse open research",
+    href: "/community",
+    highlighted: false,
+    snipcart: false,
+  },
+  {
+    id: "paper",
+    name: "Individual paper",
+    price: 29,
+    cadence: "one-time",
+    description: "Unlock a single paywalled PDF. Yours to revisit from your account.",
+    features: [
+      "Full PDF for one project paper",
+      "Figures, tables, and supplements",
+      "Receipt in Snipcart / your account",
+      "No subscription required",
+    ],
+    cta: "Choose a paper",
+    href: "/projects",
+    highlighted: false,
+    snipcart: false,
+  },
+  {
+    id: "researcher",
+    name: "Researcher",
+    price: 19,
+    cadence: "month",
+    description: "A monthly subscription for active readers who follow several project papers.",
+    features: [
+      "All current project PDFs",
+      "New papers added during the term",
+      "Webinar archive links",
+      "Cancel anytime",
+    ],
+    cta: "Subscribe monthly",
+    href: "#",
+    highlighted: true,
+    snipcart: true,
+    sku: "sub-researcher-monthly",
+    interval: "Month",
+  },
+  {
+    id: "lab",
+    name: "Lab",
+    price: 149,
+    cadence: "year",
+    description: "Annual lab access for groups that need the full project catalog and receipts.",
+    features: [
+      "Everything in Researcher",
+      "Shared lab entitlement (up to 8 seats)",
+      "Priority poster and webinar notices",
+      "Annual invoice-friendly receipt",
+    ],
+    cta: "Subscribe annually",
+    href: "#",
+    highlighted: false,
+    snipcart: true,
+    sku: "sub-lab-annual",
+    interval: "Year",
+  },
+] as const;
+
+export const dashboardDemo = {
+  awards: [
+    {
+      name: "Early Investigator Award",
+      status: "Under review",
+      cycle: "2026 cycle",
+      due: "Nomination packet received 12 Mar 2026",
+    },
+    {
+      name: "Community STEAM Prize",
+      status: "Eligible to nominate",
+      cycle: "2026 cycle",
+      due: "Closes 1 Jun 2026",
+    },
+  ],
+  projects: [
+    { title: "GBM signatures", role: "Corresponding author", status: "Published" },
+    { title: "Diabetic retinopathy screening models", role: "Collaborator", status: "In revision" },
+  ],
+  submissions: [
+    { title: "Workshop abstract: AI in county libraries", venue: "Outreach Events", status: "Accepted" },
+    { title: "Poster: Nilearn QC dashboard", venue: "Professional Development", status: "Camera-ready due" },
+  ],
+  publications: [
+    { title: "Imaging biomarkers in uveal melanoma", year: "2024", href: "/projects/visual/uveal-melanoma" },
+    { title: "Colon cancer paper", year: "2024", href: "/projects/cancer/colon-cancer-paper" },
+  ],
+  webinars: [
+    { title: "Reporting checklists for biomedical AI", date: "8 Oct 2026", href: "/professional-development/webinars" },
+    { title: "Poster clinic: figures that survive review", date: "19 Nov 2026", href: "/professional-development/webinars" },
+  ],
+  posters: [
+    { title: "Nilearn multi-site maps", event: "Imaging Methods Meeting", href: "/professional-development/poster-presentations" },
+    { title: "Referable DR operating points", event: "Visual Science Forum", href: "/professional-development/poster-presentations" },
+  ],
+};
+
+export const faqs = [
+  {
+    q: "Who can be nominated for an award?",
+    a: "Students, postdoctoral researchers, staff scientists, and community educators may be nominated if their work sits in a listed subject domain and the nominator can speak to impact. Self-nominations are allowed for Early Investigator and Community STEAM.",
+  },
+  {
+    q: "Is there a nomination fee?",
+    a: "No. Award nominations are free. Project paper PDFs are the only paid content on this site.",
+  },
+  {
+    q: "When are winners announced?",
+    a: "Each cycle publishes a shortlist, then winners, on the Awards page. Recipients are invited to a webinar and may deposit a poster in Professional Development.",
+  },
+  {
+    q: "Can a lab submit more than one nomination?",
+    a: "Yes. A lab may submit one nomination per category per cycle. The same person cannot win two categories in the same year.",
+  },
+  {
+    q: "Do you accept institutional letters as PDFs?",
+    a: "Yes. Upload institutional letters in the nomination form. Do not email sensitive recommendation letters to the public contact inbox.",
+  },
+];

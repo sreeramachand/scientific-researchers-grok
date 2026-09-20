@@ -1,0 +1,68 @@
+---
+import "../styles/global.css";
+import Header from "../components/Header.astro";
+import Footer from "../components/Footer.astro";
+import CommerceScript from "../components/CommerceScript.astro";
+import { site } from "../data/site";
+import { env } from "../lib/env";
+
+type Props = {
+  title?: string;
+  description?: string;
+  image?: string;
+};
+
+const {
+  title = site.name,
+  description = site.description,
+  image = "/logo.png",
+} = Astro.props;
+
+const pageTitle = title === site.name ? title : `${title} · ${site.name}`;
+const canonical = new URL(Astro.url.pathname, Astro.site ?? site.url).toString();
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{pageTitle}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    <link rel="icon" type="image/png" href="/favicon.png" />
+    <link rel="icon" href="/favicon.ico" />
+    <link rel="apple-touch-icon" href="/logo.png" />
+    <meta property="og:title" content={pageTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:type" content="website" />
+    <meta property="og:image" content={image} />
+    <meta name="twitter:card" content="summary" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Source+Serif+4:opsz,wght@8..60,500;8..60,650;8..60,700&display=swap"
+      rel="stylesheet"
+    />
+    {env.snipcartKey && (
+      <link rel="preconnect" href="https://app.snipcart.com" />
+      <link rel="preconnect" href="https://cdn.snipcart.com" />
+      <link rel="stylesheet" href="https://cdn.snipcart.com/themes/v3.2.2/default/snipcart.css" />
+    )}
+  </head>
+  <body class="min-h-screen bg-white text-ink antialiased">
+    <a class="skip-link" href="#main">Skip to content</a>
+    <Header />
+    <main id="main">
+      <slot />
+    </main>
+    <Footer />
+    <CommerceScript />
+    {env.snipcartKey ? (
+      <>
+        <div hidden id="snipcart" data-api-key={env.snipcartKey} data-config-modal-style="side"></div>
+        <script is:inline src="https://cdn.snipcart.com/themes/v3.2.2/default/snipcart.js"></script>
+      </>
+    ) : null}
+  </body>
+</html>

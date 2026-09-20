@@ -1,0 +1,24 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import PageHero from "../components/PageHero.astro";
+import { env } from "../lib/env";
+---
+
+<BaseLayout title="Donate" description="Support Scientific Researchers community programs through Buy Me A Coffee.">
+  <PageHero
+    kicker="Donate"
+    title="Keep community programs free"
+    lede="Donations go to AI/STEAM sessions, outreach events, and workshop materials. They do not unlock project PDFs — those are sold separately through Snipcart."
+  >
+    <a class="btn btn-primary mt-8" href={env.buyMeACoffeeUrl} rel="noreferrer" target="_blank">Donate on Buy Me A Coffee</a>
+  </PageHero>
+  <section class="mx-auto max-w-3xl px-4 py-12 prose-sr lg:px-6">
+    <h2>What a gift supports</h2>
+    <ul>
+      <li>Travel and kits for county-library STEAM nights</li>
+      <li>Captioning and recordings for public webinars</li>
+      <li>Printed posters for early-career presenters</li>
+    </ul>
+    <p>If the Buy Me A Coffee URL is still a placeholder, replace <code>PUBLIC_BUYMEACOFFEE_URL</code> in your environment before a public launch.</p>
+  </section>
+</BaseLayout>

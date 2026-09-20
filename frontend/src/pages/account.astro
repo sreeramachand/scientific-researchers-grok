@@ -1,0 +1,183 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import { env } from "../lib/env";
+---
+
+<BaseLayout title="Account" description="Manage your Scientific Researchers username, password, email, billing, and subscriptions.">
+  <section id="account-app" class="mx-auto hidden max-w-4xl px-4 py-10 lg:px-6">
+    <h1 class="font-serif text-4xl">Account</h1>
+    <p class="mt-2 text-slate-600">Profile, security, billing, and subscription controls. Neon Auth and billing APIs are wired through environment placeholders.</p>
+
+    <div class="mt-8 grid gap-6">
+      <form id="profile-form" class="card grid gap-4 p-6">
+        <h2 class="font-serif text-2xl">Username and profile</h2>
+        <div class="field">
+          <label for="name">Display name</label>
+          <input id="name" name="name" required />
+        </div>
+        <div class="field">
+          <label for="username">Username</label>
+          <input id="username" name="username" required />
+        </div>
+        <button class="btn btn-primary w-fit" type="submit">Save profile</button>
+        <p class="form-note text-sm text-slate-500" data-for="profile-form"></p>
+      </form>
+
+      <section class="card grid gap-4 p-6">
+        <h2 class="font-serif text-2xl">Password</h2>
+        <p class="text-sm text-slate-600">Current password is never shown. Use the form below to rotate it through Neon Auth when configured.</p>
+        <div class="field">
+          <label for="current-password-display">Current password</label>
+          <input id="current-password-display" value="••••••••" readonly />
+        </div>
+        <form id="password-form" class="grid gap-4">
+          <div class="field">
+            <label for="currentPassword">Confirm current password</label>
+            <input id="currentPassword" name="currentPassword" type="password" autocomplete="current-password" required />
+          </div>
+          <div class="field">
+            <label for="newPassword">New password</label>
+            <input id="newPassword" name="newPassword" type="password" autocomplete="new-password" required minlength="8" />
+          </div>
+          <button class="btn btn-secondary w-fit" type="submit">Change password</button>
+          <p class="form-note text-sm text-slate-500" data-for="password-form"></p>
+        </form>
+      </section>
+
+      <form id="email-form" class="card grid gap-4 p-6">
+        <h2 class="font-serif text-2xl">Email</h2>
+        <div class="field">
+          <label for="current-email">Current email</label>
+          <input id="current-email" readonly />
+        </div>
+        <div class="field">
+          <label for="newEmail">Change email</label>
+          <input id="newEmail" name="newEmail" type="email" required />
+        </div>
+        <button class="btn btn-secondary w-fit" type="submit">Change email</button>
+        <p class="form-note text-sm text-slate-500" data-for="email-form"></p>
+      </form>
+
+      <section class="card grid gap-4 p-6">
+        <h2 class="font-serif text-2xl">Billing</h2>
+        <p class="text-sm text-slate-600">Card details are collected by Snipcart at checkout. This panel is the account-side placeholder for a billing portal API.</p>
+        <div class="grid gap-3 sm:grid-cols-2">
+          <div class="rounded-xl border border-slate-200 p-4">
+            <p class="text-xs font-bold uppercase tracking-wide text-slate-500">Payment method</p>
+            <p id="billing-method" class="mt-2 text-slate-800">No card on file</p>
+          </div>
+          <div class="rounded-xl border border-slate-200 p-4">
+            <p class="text-xs font-bold uppercase tracking-wide text-slate-500">Billing email</p>
+            <p id="billing-email" class="mt-2 text-slate-800">—</p>
+          </div>
+        </div>
+        <div class="flex flex-wrap gap-3">
+          <button id="update-billing" class="btn btn-secondary" type="button">Update billing details</button>
+          <a class="btn btn-ghost" href="/#pricing">View plans</a>
+        </div>
+        <p id="billing-note" class="text-sm text-slate-500"></p>
+      </section>
+
+      <section class="card grid gap-4 p-6">
+        <h2 class="font-serif text-2xl">Subscriptions</h2>
+        <div id="subscription-box" class="rounded-xl border border-slate-200 p-4 text-sm text-slate-700"></div>
+        <div class="flex flex-wrap gap-3">
+          <a class="btn btn-primary" href="/#pricing">Change plan</a>
+          <button id="cancel-sub" class="btn btn-secondary" type="button">Cancel subscription</button>
+        </div>
+      </section>
+
+      <section class="card grid gap-4 p-6">
+        <h2 class="font-serif text-2xl">Purchased papers</h2>
+        <ul id="purchase-list" class="space-y-2 text-sm text-slate-700"></ul>
+      </section>
+    </div>
+    {!env.neonAuthUrl && <p class="mt-6 text-xs text-slate-500">Neon Auth URL is empty. Profile edits stay in local demo storage and are ready to post to Better Auth endpoints once PUBLIC_NEON_AUTH_URL is set.</p>}
+  </section>
+</BaseLayout>
+
+<script>
+  import { changeEmail, changePassword, requireAuth, updateProfile } from "../lib/auth";
+  import { cancelSubscription, getSubscription, listEntitlements } from "../lib/entitlements";
+
+  const user = requireAuth();
+  if (!user) throw new Error("redirecting");
+
+  document.getElementById("account-app")?.classList.remove("hidden");
+  const name = document.getElementById("name") as HTMLInputElement;
+  const username = document.getElementById("username") as HTMLInputElement;
+  const currentEmail = document.getElementById("current-email") as HTMLInputElement;
+  const newEmail = document.getElementById("newEmail") as HTMLInputElement;
+  const billingEmail = document.getElementById("billing-email");
+  name.value = user.name;
+  username.value = user.username;
+  currentEmail.value = user.email;
+  newEmail.value = user.email;
+  if (billingEmail) billingEmail.textContent = user.email;
+
+  function note(id: string, text: string) {
+    const el = document.querySelector(`[data-for="${id}"]`);
+    if (el) el.textContent = text;
+  }
+
+  function renderCommerce() {
+    const sub = getSubscription();
+    const box = document.getElementById("subscription-box");
+    if (box) {
+      box.textContent = sub
+        ? `${sub.name} · ${sub.status} · ${sub.interval} · renews ${new Date(sub.renewsOn).toLocaleDateString()}`
+        : "No active subscription. Individual paper purchases still appear below.";
+    }
+    const list = document.getElementById("purchase-list");
+    const items = listEntitlements();
+    if (list) {
+      list.innerHTML = items.length
+        ? items.map((item) => `<li>${item.title} · ${new Date(item.purchasedAt).toLocaleDateString()}</li>`).join("")
+        : "<li>No paper purchases yet.</li>";
+    }
+    const method = document.getElementById("billing-method");
+    if (method) method.textContent = sub || items.length ? "Demo wallet / Snipcart checkout" : "No card on file";
+  }
+
+  document.getElementById("profile-form")?.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    await updateProfile({ name: name.value, username: username.value });
+    note("profile-form", "Profile saved.");
+  });
+
+  document.getElementById("password-form")?.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const data = new FormData(event.target as HTMLFormElement);
+    try {
+      await changePassword({
+        currentPassword: String(data.get("currentPassword") ?? ""),
+        newPassword: String(data.get("newPassword") ?? ""),
+      });
+      note("password-form", "Password updated.");
+      (event.target as HTMLFormElement).reset();
+    } catch (err) {
+      note("password-form", err instanceof Error ? err.message : "Could not update password.");
+    }
+  });
+
+  document.getElementById("email-form")?.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const next = await changeEmail(newEmail.value);
+    currentEmail.value = next.email;
+    if (billingEmail) billingEmail.textContent = next.email;
+    note("email-form", "Email updated. Confirm the change if Neon Auth sends a verification link.");
+  });
+
+  document.getElementById("update-billing")?.addEventListener("click", () => {
+    const el = document.getElementById("billing-note");
+    if (el) el.textContent = "Billing portal placeholder: connect Snipcart customer dashboard or your billing API here.";
+  });
+
+  document.getElementById("cancel-sub")?.addEventListener("click", () => {
+    cancelSubscription();
+    renderCommerce();
+  });
+
+  renderCommerce();
+  window.addEventListener("sr-entitlements-changed", renderCommerce);
+</script>

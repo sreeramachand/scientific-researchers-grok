@@ -1,0 +1,83 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import PageHero from "../components/PageHero.astro";
+import { env } from "../lib/env";
+import { site } from "../data/site";
+---
+
+<BaseLayout title="Contact" description="Write to the Scientific Researchers editorial office about papers, programs, awards, or access.">
+  <PageHero
+    kicker="Contact"
+    title="Write to the editorial office"
+    lede="Use this form for publication questions, community programs, awards, or access issues. The message is sent through Web3Forms when an access key is configured."
+  />
+  <section class="mx-auto grid max-w-6xl gap-8 px-4 py-12 lg:grid-cols-[1.1fr_0.9fr] lg:px-6">
+    <form id="contact-form" class="card grid gap-4 p-6 sm:p-8" novalidate>
+      <input type="hidden" name="access_key" value={env.web3formsKey} />
+      <input type="hidden" name="subject" value="Scientific Researchers contact" />
+      <input type="checkbox" name="botcheck" class="hidden" tabindex="-1" aria-hidden="true" />
+      <div class="field">
+        <label for="name">Name</label>
+        <input id="name" name="name" required autocomplete="name" />
+      </div>
+      <div class="field">
+        <label for="email">Email</label>
+        <input id="email" name="email" type="email" required autocomplete="email" />
+      </div>
+      <div class="field">
+        <label for="topic">Topic</label>
+        <select id="topic" name="topic">
+          <option>Projects and papers</option>
+          <option>Community Services</option>
+          <option>Professional Development</option>
+          <option>Awards</option>
+          <option>Subscriptions and billing</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="message">Message</label>
+        <textarea id="message" name="message" rows="6" required></textarea>
+      </div>
+      <button class="btn btn-primary" type="submit">Send message</button>
+      <p id="contact-status" class="text-sm text-slate-600" role="status"></p>
+    </form>
+    <aside class="prose-sr">
+      <h2>Direct channels</h2>
+      <p>Email <a class="text-brand-700" href={`mailto:${site.email}`}>{site.email}</a> for editorial correspondence. Do not send recommendation letters or manuscript files that contain identifiable patient data to this inbox.</p>
+      <h2>Hours</h2>
+      <p>The office reads messages on weekdays. Award nominations use the Awards page, not this form.</p>
+      <h2>Donate</h2>
+      <p>Program support goes through Buy Me A Coffee on the <a class="text-brand-700" href="/donate">Donate</a> page.</p>
+    </aside>
+  </section>
+</BaseLayout>
+
+<script>
+  const form = document.getElementById("contact-form") as HTMLFormElement | null;
+  const status = document.getElementById("contact-status");
+  const key = (import.meta.env.PUBLIC_WEB3FORMS_ACCESS_KEY as string | undefined)?.trim();
+
+  form?.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    if (!form) return;
+    if (!key) {
+      if (status) status.textContent = "Message captured locally. Add PUBLIC_WEB3FORMS_ACCESS_KEY to deliver through Web3Forms.";
+      form.reset();
+      return;
+    }
+    if (status) status.textContent = "Sending…";
+    const body = new FormData(form);
+    try {
+      const response = await fetch("https://api.web3forms.com/submit", { method: "POST", body });
+      const data = await response.json();
+      if (data.success) {
+        if (status) status.textContent = "Received. We will reply to the address you entered.";
+        form.reset();
+      } else {
+        if (status) status.textContent = data.message ?? "The form could not be sent.";
+      }
+    } catch {
+      if (status) status.textContent = "Network error. Try again or email the office directly.";
+    }
+  });
+</script>

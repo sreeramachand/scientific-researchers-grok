@@ -1,0 +1,49 @@
+---
+import { communityLinks, professionalLinks, projectGroups } from "../data/nav";
+import { site } from "../data/site";
+import { env } from "../lib/env";
+---
+
+<footer class="mt-20 border-t border-slate-200 bg-slate-50">
+  <div class="mx-auto grid max-w-6xl gap-10 px-4 py-14 sm:grid-cols-2 lg:grid-cols-4 lg:px-6">
+    <div>
+      <div class="flex items-center gap-3">
+        <img src="/logo.png" alt="" class="h-12 w-12 object-contain" />
+        <strong class="font-serif text-lg">{site.name}</strong>
+      </div>
+      <p class="mt-3 text-sm leading-6 text-slate-600">{site.tagline}</p>
+    </div>
+    <div>
+      <h2 class="text-sm font-bold uppercase tracking-wide text-slate-500">Projects</h2>
+      <ul class="mt-3 space-y-2 text-sm">
+        {projectGroups.map((group) => (
+          <li><a class="text-slate-700 hover:text-brand-700" href={group.href}>{group.label}</a></li>
+        ))}
+      </ul>
+    </div>
+    <div>
+      <h2 class="text-sm font-bold uppercase tracking-wide text-slate-500">Open programs</h2>
+      <ul class="mt-3 space-y-2 text-sm">
+        {communityLinks.map((item) => (
+          <li><a class="text-slate-700 hover:text-brand-700" href={item.href}>{item.label}</a></li>
+        ))}
+        {professionalLinks.slice(0, 2).map((item) => (
+          <li><a class="text-slate-700 hover:text-brand-700" href={item.href}>{item.label}</a></li>
+        ))}
+        <li><a class="text-slate-700 hover:text-brand-700" href="/awards">Awards</a></li>
+      </ul>
+    </div>
+    <div>
+      <h2 class="text-sm font-bold uppercase tracking-wide text-slate-500">Contact</h2>
+      <ul class="mt-3 space-y-2 text-sm">
+        <li><a class="text-slate-700 hover:text-brand-700" href="/contact">Write to the editorial office</a></li>
+        <li><a class="text-slate-700 hover:text-brand-700" href="/donate">Donate</a></li>
+        <li><a class="text-slate-700 hover:text-brand-700" href={env.buyMeACoffeeUrl} rel="noreferrer" target="_blank">Buy Me A Coffee</a></li>
+        <li><a class="text-slate-700 hover:text-brand-700" href={`mailto:${site.email}`}>{site.email}</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="border-t border-slate-200 py-5 text-center text-xs text-slate-500">
+    © {new Date().getFullYear()} {site.name}. Project PDFs are licensed to the purchaser or active subscriber.
+  </div>
+</footer>

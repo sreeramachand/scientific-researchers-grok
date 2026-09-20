@@ -1,0 +1,203 @@
+---
+import {
+  awardAnchors,
+  communityLinks,
+  professionalLinks,
+  profileLinks,
+  projectGroups,
+} from "../data/nav";
+import { site } from "../data/site";
+
+const path = Astro.url.pathname;
+---
+
+<header class="sticky top-0 z-40 border-b border-slate-200/80 bg-white/90 backdrop-blur-md">
+  <div class="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3 lg:px-6">
+    <a href="/" class="flex min-w-0 items-center gap-3">
+      <img src="/logo.png" alt="" class="h-12 w-12 shrink-0 object-contain" width="48" height="48" />
+      <span class="truncate font-serif text-lg font-semibold tracking-tight text-slate-900 sm:text-xl">
+        {site.name}
+      </span>
+    </a>
+
+    <nav class="hidden items-center gap-1 xl:flex" aria-label="Primary">
+      <div class="dropdown-root relative">
+        <a class:list={["nav-link", path.startsWith("/projects") && "bg-brand-50 text-brand-600"]} href="/projects">
+          Projects
+          <svg class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M5.2 7.5 10 12.2l4.8-4.7" /></svg>
+        </a>
+        <div class="dropdown-panel absolute left-0 top-full z-30 mt-2 w-[34rem] rounded-2xl border border-slate-200 bg-white p-4 shadow-xl">
+          <div class="grid grid-cols-3 gap-4">
+            {projectGroups.map((group) => (
+              <div>
+                <a href={group.href} class="text-sm font-bold text-brand-700">{group.label}</a>
+                <ul class="mt-2 space-y-1.5">
+                  {group.items.map((item) => (
+                    <li><a class="block rounded-lg px-2 py-1 text-sm text-slate-600 hover:bg-slate-50 hover:text-slate-900" href={item.href}>{item.label}</a></li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div class="dropdown-root relative">
+        <a class:list={["nav-link", path.startsWith("/community") && "bg-brand-50 text-brand-600"]} href="/community">
+          Community Services
+          <svg class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M5.2 7.5 10 12.2l4.8-4.7" /></svg>
+        </a>
+        <div class="dropdown-panel absolute left-0 top-full z-30 mt-2 w-64 rounded-2xl border border-slate-200 bg-white p-2 shadow-xl">
+          {communityLinks.map((item) => (
+            <a class="block rounded-lg px-3 py-2 text-sm text-slate-700 hover:bg-slate-50" href={item.href}>{item.label}</a>
+          ))}
+        </div>
+      </div>
+
+      <div class="dropdown-root relative">
+        <a class:list={["nav-link", path.startsWith("/professional-development") && "bg-brand-50 text-brand-600"]} href="/professional-development">
+          Professional Development
+          <svg class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M5.2 7.5 10 12.2l4.8-4.7" /></svg>
+        </a>
+        <div class="dropdown-panel absolute left-0 top-full z-30 mt-2 w-72 rounded-2xl border border-slate-200 bg-white p-2 shadow-xl">
+          {professionalLinks.map((item) => (
+            <a class="block rounded-lg px-3 py-2 text-sm text-slate-700 hover:bg-slate-50" href={item.href}>{item.label}</a>
+          ))}
+        </div>
+      </div>
+
+      <div class="dropdown-root relative">
+        <a class:list={["nav-link", path.startsWith("/awards") && "bg-brand-50 text-brand-600"]} href="/awards">
+          Awards
+          <svg class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M5.2 7.5 10 12.2l4.8-4.7" /></svg>
+        </a>
+        <div class="dropdown-panel absolute left-0 top-full z-30 mt-2 w-64 rounded-2xl border border-slate-200 bg-white p-2 shadow-xl">
+          {awardAnchors.map((item) => (
+            <a class="block rounded-lg px-3 py-2 text-sm text-slate-700 hover:bg-slate-50" href={item.href}>{item.label}</a>
+          ))}
+        </div>
+      </div>
+    </nav>
+
+    <div class="flex items-center gap-2">
+      <div id="auth-guest" class="hidden items-center gap-2 xl:flex">
+        <a class="btn btn-ghost px-3 py-2" href="/login">Login</a>
+        <a class="btn btn-primary px-3 py-2" href="/signup">Sign Up</a>
+      </div>
+      <div id="auth-user" class="dropdown-root relative hidden">
+        <button type="button" class="flex items-center gap-2 rounded-full border border-slate-200 p-1 pr-3 hover:bg-slate-50" aria-haspopup="menu" aria-label="Account menu">
+          <span id="avatar-letter" class="grid h-9 w-9 place-items-center rounded-full bg-gradient-to-br from-cyan-500 to-brand-600 text-sm font-bold text-white">S</span>
+          <span id="avatar-name" class="hidden max-w-[8rem] truncate text-sm font-semibold sm:inline">Account</span>
+        </button>
+        <div class="dropdown-panel absolute right-0 top-full z-30 mt-2 w-56 rounded-2xl border border-slate-200 bg-white p-2 shadow-xl" role="menu">
+          {profileLinks.map((item) => (
+            <a class="block rounded-lg px-3 py-2 text-sm text-slate-700 hover:bg-slate-50" href={item.href}>{item.label}</a>
+          ))}
+          <button id="logout-btn" type="button" class="block w-full rounded-lg px-3 py-2 text-left text-sm text-slate-700 hover:bg-slate-50">Logout</button>
+        </div>
+      </div>
+      <button
+        id="menu-toggle"
+        type="button"
+        class="grid h-11 w-11 place-items-center rounded-xl border border-slate-200 xl:hidden"
+        aria-expanded="false"
+        aria-controls="mobile-nav"
+      >
+        <span class="sr-only">Open menu</span>
+        <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M4 7h16M4 12h16M4 17h16"></path>
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <div id="mobile-nav" class="hidden border-t border-slate-200 bg-white xl:hidden" hidden>
+    <div class="mx-auto grid max-w-6xl gap-2 px-4 py-4">
+      <details>
+        <summary class="cursor-pointer list-none rounded-xl px-3 py-2 font-semibold">Projects</summary>
+        <div class="mt-1 space-y-3 border-l border-slate-200 pl-4">
+          {projectGroups.map((group) => (
+            <div>
+              <a class="text-sm font-bold text-brand-700" href={group.href}>{group.label}</a>
+              {group.items.map((item) => (
+                <a class="block py-1 text-sm text-slate-600" href={item.href}>{item.label}</a>
+              ))}
+            </div>
+          ))}
+        </div>
+      </details>
+      <details>
+        <summary class="cursor-pointer list-none rounded-xl px-3 py-2 font-semibold">Community Services</summary>
+        <div class="border-l border-slate-200 pl-4">
+          {communityLinks.map((item) => <a class="block py-1 text-sm text-slate-600" href={item.href}>{item.label}</a>)}
+        </div>
+      </details>
+      <details>
+        <summary class="cursor-pointer list-none rounded-xl px-3 py-2 font-semibold">Professional Development</summary>
+        <div class="border-l border-slate-200 pl-4">
+          {professionalLinks.map((item) => <a class="block py-1 text-sm text-slate-600" href={item.href}>{item.label}</a>)}
+        </div>
+      </details>
+      <details>
+        <summary class="cursor-pointer list-none rounded-xl px-3 py-2 font-semibold">Awards</summary>
+        <div class="border-l border-slate-200 pl-4">
+          <a class="block py-1 text-sm text-slate-600" href="/awards">Awards overview</a>
+          {awardAnchors.map((item) => <a class="block py-1 text-sm text-slate-600" href={item.href}>{item.label}</a>)}
+        </div>
+      </details>
+      <div id="mobile-auth-guest" class="mt-2 hidden gap-2">
+        <a class="btn btn-secondary flex-1" href="/login">Login</a>
+        <a class="btn btn-primary flex-1" href="/signup">Sign Up</a>
+      </div>
+      <div id="mobile-auth-user" class="mt-2 hidden flex-col gap-1">
+        {profileLinks.map((item) => <a class="rounded-xl px-3 py-2 text-sm" href={item.href}>{item.label}</a>)}
+        <button id="mobile-logout" type="button" class="rounded-xl px-3 py-2 text-left text-sm">Logout</button>
+      </div>
+    </div>
+  </div>
+</header>
+
+<script>
+  import { getSession, onAuthChange, signOut } from "../lib/auth";
+
+  const guest = document.getElementById("auth-guest");
+  const userBox = document.getElementById("auth-user");
+  const mobileGuest = document.getElementById("mobile-auth-guest");
+  const mobileUser = document.getElementById("mobile-auth-user");
+  const letter = document.getElementById("avatar-letter");
+  const nameEl = document.getElementById("avatar-name");
+  const toggle = document.getElementById("menu-toggle");
+  const mobile = document.getElementById("mobile-nav");
+
+  async function syncAuth() {
+    const user = await getSession();
+    const signedIn = Boolean(user);
+    guest?.classList.add("hidden");
+    guest?.classList.toggle("xl:flex", !signedIn);
+    userBox?.classList.toggle("hidden", !signedIn);
+    mobileGuest?.classList.toggle("hidden", signedIn);
+    mobileGuest?.classList.toggle("flex", !signedIn);
+    mobileUser?.classList.toggle("hidden", !signedIn);
+    mobileUser?.classList.toggle("flex", signedIn);
+    if (user && letter) letter.textContent = (user.name || user.email).slice(0, 1).toUpperCase();
+    if (user && nameEl) nameEl.textContent = user.name;
+  }
+
+  toggle?.addEventListener("click", () => {
+    const open = mobile?.hasAttribute("hidden") ?? true;
+    if (open) {
+      mobile?.removeAttribute("hidden");
+      mobile?.classList.remove("hidden");
+      toggle.setAttribute("aria-expanded", "true");
+    } else {
+      mobile?.setAttribute("hidden", "");
+      mobile?.classList.add("hidden");
+      toggle.setAttribute("aria-expanded", "false");
+    }
+  });
+
+  document.getElementById("logout-btn")?.addEventListener("click", () => void signOut().then(() => (window.location.href = "/")));
+  document.getElementById("mobile-logout")?.addEventListener("click", () => void signOut().then(() => (window.location.href = "/")));
+  void syncAuth();
+  onAuthChange(() => void syncAuth());
+</script>

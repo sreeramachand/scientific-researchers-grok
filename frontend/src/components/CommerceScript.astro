@@ -1,0 +1,21 @@
+<script>
+  import { grantPaper, grantSubscription } from "../lib/entitlements";
+
+  function bindSnipcart() {
+    const snipcart = (window as Window & { Snipcart?: { events: { on: (name: string, fn: (item: { id?: string; name?: string; paymentInterval?: string }) => void) => void } } }).Snipcart;
+    if (!snipcart) return;
+    snipcart.events.on("item.added", (item) => {
+      const id = item.id ?? "";
+      if (id.startsWith("paper-")) grantPaper(id);
+      if (id.startsWith("sub-")) {
+        grantSubscription({
+          sku: id,
+          name: item.name ?? "Subscription",
+          interval: item.paymentInterval ?? "Month",
+        });
+      }
+    });
+  }
+
+  document.addEventListener("snipcart.ready", bindSnipcart);
+</script>

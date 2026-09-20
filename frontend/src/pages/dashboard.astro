@@ -1,0 +1,120 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import { dashboardDemo } from "../data/site";
+
+const panels = [
+  { id: "awards", label: "Active Awards" },
+  { id: "projects", label: "Projects" },
+  { id: "submissions", label: "Submissions" },
+  { id: "publications", label: "Completed Publications" },
+  { id: "webinars", label: "Webinar links" },
+  { id: "posters", label: "Poster presentation links" },
+];
+---
+
+<BaseLayout title="Dashboard" description="Track awards, projects, submissions, publications, webinars, and posters.">
+  <div id="dash-app" class="mx-auto hidden max-w-6xl px-4 py-8 lg:px-6">
+    <h1 class="font-serif text-4xl">Dashboard</h1>
+    <p class="mt-2 text-slate-600">Demo records are ready for the Django papers, entitlements, and profile APIs.</p>
+    <div class="mt-8 grid gap-6 lg:grid-cols-[16rem_1fr]">
+      <nav class="card h-fit p-3" aria-label="Dashboard sections">
+        {panels.map((panel, index) => (
+          <button
+            type="button"
+            class="dash-link block w-full rounded-xl px-3 py-2.5 text-left text-sm font-semibold text-slate-700 hover:bg-brand-50"
+            data-target={panel.id}
+            aria-current={index === 0 ? "page" : undefined}
+          >
+            {panel.label}
+          </button>
+        ))}
+      </nav>
+      <div>
+        <section class="dash-panel card p-6" data-panel="awards">
+          <h2 class="font-serif text-2xl">Active Awards</h2>
+          <ul class="mt-4 space-y-3">
+            {dashboardDemo.awards.map((item) => (
+              <li class="rounded-xl border border-slate-200 p-4">
+                <p class="font-semibold">{item.name}</p>
+                <p class="text-sm text-slate-600">{item.status} · {item.cycle}</p>
+                <p class="text-sm text-slate-500">{item.due}</p>
+              </li>
+            ))}
+          </ul>
+        </section>
+        <section class="dash-panel card hidden p-6" data-panel="projects">
+          <h2 class="font-serif text-2xl">Projects</h2>
+          <ul class="mt-4 space-y-3">
+            {dashboardDemo.projects.map((item) => (
+              <li class="rounded-xl border border-slate-200 p-4">
+                <p class="font-semibold">{item.title}</p>
+                <p class="text-sm text-slate-600">{item.role} · {item.status}</p>
+              </li>
+            ))}
+          </ul>
+        </section>
+        <section class="dash-panel card hidden p-6" data-panel="submissions">
+          <h2 class="font-serif text-2xl">Submissions</h2>
+          <ul class="mt-4 space-y-3">
+            {dashboardDemo.submissions.map((item) => (
+              <li class="rounded-xl border border-slate-200 p-4">
+                <p class="font-semibold">{item.title}</p>
+                <p class="text-sm text-slate-600">{item.venue} · {item.status}</p>
+              </li>
+            ))}
+          </ul>
+        </section>
+        <section class="dash-panel card hidden p-6" data-panel="publications">
+          <h2 class="font-serif text-2xl">Completed Publications</h2>
+          <ul class="mt-4 space-y-3">
+            {dashboardDemo.publications.map((item) => (
+              <li class="rounded-xl border border-slate-200 p-4">
+                <a class="font-semibold text-brand-700" href={item.href}>{item.title}</a>
+                <p class="text-sm text-slate-600">{item.year}</p>
+              </li>
+            ))}
+          </ul>
+        </section>
+        <section class="dash-panel card hidden p-6" data-panel="webinars">
+          <h2 class="font-serif text-2xl">Webinar links</h2>
+          <ul class="mt-4 space-y-3">
+            {dashboardDemo.webinars.map((item) => (
+              <li class="rounded-xl border border-slate-200 p-4">
+                <a class="font-semibold text-brand-700" href={item.href}>{item.title}</a>
+                <p class="text-sm text-slate-600">{item.date}</p>
+              </li>
+            ))}
+          </ul>
+        </section>
+        <section class="dash-panel card hidden p-6" data-panel="posters">
+          <h2 class="font-serif text-2xl">Poster presentation links</h2>
+          <ul class="mt-4 space-y-3">
+            {dashboardDemo.posters.map((item) => (
+              <li class="rounded-xl border border-slate-200 p-4">
+                <a class="font-semibold text-brand-700" href={item.href}>{item.title}</a>
+                <p class="text-sm text-slate-600">{item.event}</p>
+              </li>
+            ))}
+          </ul>
+        </section>
+      </div>
+    </div>
+  </div>
+</BaseLayout>
+
+<script>
+  import { requireAuth } from "../lib/auth";
+
+  if (!requireAuth()) throw new Error("redirecting");
+  document.getElementById("dash-app")?.classList.remove("hidden");
+
+  const links = document.querySelectorAll<HTMLButtonElement>(".dash-link");
+  const panels = document.querySelectorAll<HTMLElement>(".dash-panel");
+
+  function show(id: string) {
+    panels.forEach((panel) => panel.classList.toggle("hidden", panel.dataset.panel !== id));
+    links.forEach((link) => link.setAttribute("aria-current", link.dataset.target === id ? "page" : "false"));
+  }
+
+  links.forEach((link) => link.addEventListener("click", () => show(link.dataset.target ?? "awards")));
+</script>

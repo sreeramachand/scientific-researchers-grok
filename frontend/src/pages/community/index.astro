@@ -1,0 +1,21 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import PageHero from "../../components/PageHero.astro";
+import { communityPages } from "../../data/programs";
+---
+
+<BaseLayout title="Community Services" description="Open AI/STEAM, outreach events, and workshops from Scientific Researchers.">
+  <PageHero
+    kicker="Community Services"
+    title="Public science that does not sit behind a paywall"
+    lede="AI/STEAM teaching, outreach events, and workshops are free to read and, when capacity allows, free to attend. Donations help us travel; they never buy a project PDF."
+  />
+  <section class="mx-auto grid max-w-6xl gap-5 px-4 py-12 md:grid-cols-3 lg:px-6">
+    {communityPages.map((page) => (
+      <a href={`/community/${page.slug}`} class="card p-6">
+        <h2 class="font-serif text-2xl">{page.title}</h2>
+        <p class="mt-3 text-sm leading-6 text-slate-600">{page.lede}</p>
+      </a>
+    ))}
+  </section>
+</BaseLayout>
