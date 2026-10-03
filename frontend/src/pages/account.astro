@@ -104,15 +104,19 @@ import BaseLayout from "../layouts/BaseLayout.astro";
   const currentEmail = document.getElementById("current-email") as HTMLInputElement;
   const newEmail = document.getElementById("newEmail") as HTMLInputElement;
   const billingEmail = document.getElementById("billing-email");
-  name.value = user.name;
-  username.value = user.username;
-  currentEmail.value = user.email;
-  newEmail.value = user.email;
-  if (billingEmail) billingEmail.textContent = user.email;
+  const saved = { name: user.name, username: user.username, email: user.email };
+  name.value = saved.name;
+  username.value = saved.username;
+  currentEmail.value = saved.email;
+  newEmail.value = saved.email;
+  if (billingEmail) billingEmail.textContent = saved.email;
 
-  function note(id: string, text: string) {
+  function note(id: string, text: string, isError = false) {
     const el = document.querySelector(`[data-for="${id}"]`);
-    if (el) el.textContent = text;
+    if (!(el instanceof HTMLElement)) return;
+    el.textContent = text;
+    el.classList.toggle("text-red-600", isError);
+    el.classList.toggle("text-slate-500", !isError);
   }
 
   function renderCommerce() {
@@ -136,8 +140,18 @@ import BaseLayout from "../layouts/BaseLayout.astro";
 
   document.getElementById("profile-form")?.addEventListener("submit", async (event) => {
     event.preventDefault();
-    await updateProfile({ name: name.value, username: username.value });
-    note("profile-form", "Profile saved.");
+    try {
+      const next = await updateProfile({ name: name.value, username: username.value });
+      saved.name = next.name;
+      saved.username = next.username;
+      name.value = next.name;
+      username.value = next.username;
+      note("profile-form", "Profile saved.");
+    } catch (err) {
+      name.value = saved.name;
+      username.value = saved.username;
+      note("profile-form", err instanceof Error ? err.message : "Could not update profile.", true);
+    }
   });
 
   document.getElementById("password-form")?.addEventListener("submit", async (event) => {
@@ -151,16 +165,25 @@ import BaseLayout from "../layouts/BaseLayout.astro";
       note("password-form", "Password updated.");
       (event.target as HTMLFormElement).reset();
     } catch (err) {
-      note("password-form", err instanceof Error ? err.message : "Could not update password.");
+      note("password-form", err instanceof Error ? err.message : "Could not update password.", true);
     }
   });
 
   document.getElementById("email-form")?.addEventListener("submit", async (event) => {
     event.preventDefault();
-    const next = await changeEmail(newEmail.value);
-    currentEmail.value = next.email;
-    if (billingEmail) billingEmail.textContent = next.email;
-    note("email-form", "Email updated. Check your inbox if a confirmation message arrives.");
+    try {
+      const next = await changeEmail(newEmail.value);
+      saved.email = next.email;
+      currentEmail.value = next.email;
+      newEmail.value = next.email;
+      if (billingEmail) billingEmail.textContent = next.email;
+      note("email-form", "Email updated.");
+    } catch (err) {
+      newEmail.value = saved.email;
+      currentEmail.value = saved.email;
+      if (billingEmail) billingEmail.textContent = saved.email;
+      note("email-form", err instanceof Error ? err.message : "Could not update email.", true);
+    }
   });
 
   document.getElementById("cancel-sub")?.addEventListener("click", () => {
