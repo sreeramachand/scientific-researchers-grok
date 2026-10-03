@@ -1,4 +1,5 @@
 import { googleSessionPath, userFromNeonSession } from "./google-callback";
+import { mergeNeonAccount, profileFromSave, usernameFieldRejected } from "./profile-session";
 import { safeNextPath } from "./return-path";
 import {
   findLocalAccount,
@@ -25,6 +26,9 @@ export { GoogleOnlyAccountError, isGoogleOnlyAccountError };
 
 const STORAGE_KEY = "sr.auth.session";
 const EVENT = "sr-auth-changed";
+
+/** Bumped on every local session write so an older get-session cannot overwrite it. */
+let sessionEpoch = 0;
 
 function emit() {
   if (typeof window !== "undefined") {
@@ -53,7 +57,11 @@ export function readSession(): AuthUser | null {
 }
 
 export function writeSession(user: AuthUser | null) {
-  if (user) window.localStorage.setItem(STORAGE_KEY, JSON.stringify(user));
+  const next = user ? JSON.stringify(user) : null;
+  const prev = window.localStorage.getItem(STORAGE_KEY);
+  if (prev === next) return;
+  sessionEpoch += 1;
+  if (next) window.localStorage.setItem(STORAGE_KEY, next);
   else window.localStorage.removeItem(STORAGE_KEY);
   emit();
 }
@@ -125,11 +133,14 @@ async function withProviders(user: AuthUser): Promise<AuthUser> {
 
 export async function getSession(): Promise<AuthUser | null> {
   if (neonUrl()) {
+    const epoch = sessionEpoch;
     try {
       const data = (await neonJson("/get-session", { method: "GET" })) as Record<string, unknown>;
-      if (!data || (data.session == null && data.user == null)) return null;
-      const session = (data.session ?? data) as Record<string, unknown>;
-      const user = await withProviders(mapNeonUser((session.user as Record<string, unknown>) ?? session));
+      if (epoch !== sessionEpoch) return readSession();
+      const account = mergeNeonAccount(data, readSession());
+      if (!account) return null;
+      const user = await withProviders(account);
+      if (epoch !== sessionEpoch) return readSession();
       writeSession(user);
       return user;
     } catch {
@@ -409,39 +420,55 @@ export async function changePassword(input: {
 }
 
 export async function changeEmail(email: string): Promise<AuthUser> {
-  if (!email.includes("@")) throw new Error("Enter a valid email address.");
+  const nextEmail = email.trim();
+  if (!nextEmail.includes("@")) throw new Error("Enter a valid email address.");
+  const current = readSession();
+  if (!current) throw new Error("Sign in to change your email.");
+  if (nextEmail.toLowerCase() === current.email.toLowerCase()) return current;
   if (neonUrl()) {
     await neonJson("/change-email", {
       method: "POST",
-      body: JSON.stringify({ newEmail: email }),
+      body: JSON.stringify({
+        newEmail: nextEmail,
+        callbackURL: `${window.location.origin}/account`,
+      }),
     });
+    const refreshed = await getSession();
+    if (refreshed && refreshed.email.toLowerCase() === nextEmail.toLowerCase()) {
+      const account = findLocalAccount(current.email);
+      if (account) saveLocalAccount({ ...account, email: refreshed.email });
+      return refreshed;
+    }
+    throw new Error("Check your inbox to confirm the new email. It stays the same until you confirm.");
   }
-  const current = readSession();
-  if (!current) throw new Error("Sign in to change your email.");
   const account = findLocalAccount(current.email);
-  if (account) saveLocalAccount({ ...account, email });
-  const next = { ...current, email };
+  if (account) saveLocalAccount({ ...account, email: nextEmail });
+  const next = { ...current, email: nextEmail };
   writeSession(next);
   return next;
 }
 
 export async function updateProfile(input: { name: string; username: string }): Promise<AuthUser> {
-  if (!input.username.trim()) throw new Error("Username is required.");
+  const current = readSession();
+  if (!current) throw new Error("Sign in to update your profile.");
+  const next = profileFromSave(current, input);
   if (neonUrl()) {
     try {
       await neonJson("/update-user", {
         method: "POST",
-        body: JSON.stringify(input),
+        body: JSON.stringify({ name: next.name, username: next.username }),
       });
-    } catch {
-      /* local profile still updates for the UI */
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "";
+      if (!usernameFieldRejected(message)) throw error;
+      await neonJson("/update-user", {
+        method: "POST",
+        body: JSON.stringify({ name: next.name }),
+      });
     }
   }
-  const current = readSession();
-  if (!current) throw new Error("Sign in to update your profile.");
   const account = findLocalAccount(current.email);
-  if (account) saveLocalAccount({ ...account, name: input.name, username: input.username });
-  const next = { ...current, ...input };
+  if (account) saveLocalAccount({ ...account, name: next.name, username: next.username });
   writeSession(next);
   return next;
 }
