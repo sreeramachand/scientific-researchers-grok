@@ -1,0 +1,43 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+---
+
+<BaseLayout title="Signing in" description="Finishing Google sign-in.">
+  <section class="mx-auto max-w-md px-4 py-16">
+    <h1 class="font-serif text-4xl">Signing in</h1>
+    <p id="auth-status" class="mt-4 text-slate-600" role="status">Finishing Google sign-in…</p>
+    <p id="auth-error" class="mt-4 text-sm text-red-600" role="alert"></p>
+    <p class="mt-6 text-sm text-slate-600"><a class="font-semibold text-brand-700" href="/login">Back to login</a></p>
+  </section>
+</BaseLayout>
+
+<script>
+  import { establishGoogleSession, getSession } from "../../lib/auth";
+  import { readGoogleCallback } from "../../lib/google-callback";
+
+  const status = document.getElementById("auth-status");
+  const error = document.getElementById("auth-error");
+  const result = readGoogleCallback(new URLSearchParams(window.location.search));
+
+  function showError(message: string) {
+    if (status) status.textContent = "";
+    if (error) error.textContent = message;
+  }
+
+  if (result.status === "error") {
+    showError(result.message);
+  } else if (result.status === "verifier") {
+    void establishGoogleSession(result.verifier)
+      .then(() => {
+        window.location.replace(result.next);
+      })
+      .catch((err) => {
+        showError(err instanceof Error ? err.message : "Google sign-in failed.");
+      });
+  } else {
+    void getSession().then((user) => {
+      if (user) window.location.replace(result.next);
+      else showError("Google sign-in did not create a session.");
+    });
+  }
+</script>

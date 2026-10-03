@@ -33,17 +33,22 @@ import BaseLayout from "../layouts/BaseLayout.astro";
 
 <script>
   import { getSession, signInWithGoogle, signUp } from "../lib/auth";
+  import { googleCallbackErrorMessage } from "../lib/google-callback";
   import { safeNextPath } from "../lib/return-path";
 
-  const next = safeNextPath(new URLSearchParams(window.location.search).get("next"));
+  const params = new URLSearchParams(window.location.search);
+  const next = safeNextPath(params.get("next"));
   const error = document.getElementById("auth-error");
+  const googleError = googleCallbackErrorMessage(params.get("error"));
   const login = document.querySelector('a[href="/login"]');
   if (login instanceof HTMLAnchorElement) {
     login.href = `/login?next=${encodeURIComponent(next)}`;
   }
 
+  if (googleError && error) error.textContent = googleError;
+
   void getSession().then((user) => {
-    if (user) window.location.replace(next);
+    if (user && !googleError) window.location.replace(next);
   });
 
   document.getElementById("signup-form")?.addEventListener("submit", async (event) => {
@@ -64,7 +69,7 @@ import BaseLayout from "../layouts/BaseLayout.astro";
 
   document.getElementById("google-btn")?.addEventListener("click", async () => {
     try {
-      const providerUrl = await signInWithGoogle(next);
+      const providerUrl = await signInWithGoogle(next, "signup");
       window.location.assign(providerUrl ?? next);
     } catch (err) {
       if (error) error.textContent = err instanceof Error ? err.message : "Google sign-in failed.";

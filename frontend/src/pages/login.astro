@@ -29,11 +29,13 @@ import BaseLayout from "../layouts/BaseLayout.astro";
 
 <script>
   import { getSession, signIn, signInWithGoogle } from "../lib/auth";
+  import { googleCallbackErrorMessage } from "../lib/google-callback";
   import { safeNextPath } from "../lib/return-path";
 
   const params = new URLSearchParams(window.location.search);
   const next = safeNextPath(params.get("next"));
   const error = document.getElementById("auth-error");
+  const googleError = googleCallbackErrorMessage(params.get("error"));
   const status = document.getElementById("auth-status");
   const signup = document.getElementById("signup-link");
   if (signup instanceof HTMLAnchorElement) {
@@ -43,8 +45,10 @@ import BaseLayout from "../layouts/BaseLayout.astro";
     status.textContent = "Password updated. Sign in with your new password.";
   }
 
+  if (googleError && error) error.textContent = googleError;
+
   void getSession().then((user) => {
-    if (user) window.location.replace(next);
+    if (user && !googleError) window.location.replace(next);
   });
 
   document.getElementById("login-form")?.addEventListener("submit", async (event) => {
@@ -64,7 +68,7 @@ import BaseLayout from "../layouts/BaseLayout.astro";
 
   document.getElementById("google-btn")?.addEventListener("click", async () => {
     try {
-      const providerUrl = await signInWithGoogle(next);
+      const providerUrl = await signInWithGoogle(next, "login");
       // Neon returns the Google start URL. Open that, then come back to next.
       window.location.assign(providerUrl ?? next);
     } catch (err) {
