@@ -8,6 +8,7 @@ really came from Snipcart. The secret is never read from the repository.
 from __future__ import annotations
 
 import base64
+import json
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -15,6 +16,7 @@ import urllib.request
 from django.conf import settings
 
 VALIDATION_URL = "https://app.snipcart.com/api/requestvalidation/{token}"
+ORDER_URL = "https://app.snipcart.com/api/orders/{token}"
 PAID_STATUSES = {"Paid", "Authorized", "Deferred", "PaidDeferred"}
 
 
@@ -41,6 +43,38 @@ def token_is_valid(token: str, opener=urllib.request.urlopen) -> bool:
         return False
     except urllib.error.URLError:
         return False
+
+
+def fetch_order(token: str, opener=urllib.request.urlopen) -> dict | None:
+    """Load a Snipcart order. Requires the secret API key. Returns None if it cannot be confirmed."""
+    secret = getattr(settings, "SNIPCART_API_KEY", "").strip()
+    if not secret or not token:
+        return None
+    url = ORDER_URL.format(token=urllib.parse.quote(token, safe=""))
+    auth = base64.b64encode(f"{secret}:".encode()).decode("ascii")
+    request = urllib.request.Request(
+        url,
+        headers={"Authorization": f"Basic {auth}", "Accept": "application/json"},
+        method="GET",
+    )
+    try:
+        with opener(request, timeout=10) as response:
+            status = getattr(response, "status", None) or getattr(response, "code", None)
+            if status != 200:
+                return None
+            raw = response.read()
+            if isinstance(raw, bytes):
+                raw = raw.decode()
+            payload = json.loads(raw)
+    except (urllib.error.HTTPError, urllib.error.URLError, ValueError, TypeError, AttributeError):
+        return None
+    return payload if isinstance(payload, dict) else None
+
+
+def order_grants_sku(order: dict, sku: str) -> bool:
+    if order.get("paymentStatus") not in PAID_STATUSES:
+        return False
+    return sku in paper_ids(order)
 
 
 def order_is_paid(content: dict) -> bool:

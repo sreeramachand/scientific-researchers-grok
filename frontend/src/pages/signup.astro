@@ -33,11 +33,17 @@ import BaseLayout from "../layouts/BaseLayout.astro";
 
 <script>
   import { getSession, signInWithGoogle, signUp } from "../lib/auth";
+  import { safeNextPath } from "../lib/return-path";
 
+  const next = safeNextPath(new URLSearchParams(window.location.search).get("next"));
   const error = document.getElementById("auth-error");
+  const login = document.querySelector('a[href="/login"]');
+  if (login instanceof HTMLAnchorElement) {
+    login.href = `/login?next=${encodeURIComponent(next)}`;
+  }
 
   void getSession().then((user) => {
-    if (user) window.location.replace("/dashboard");
+    if (user) window.location.replace(next);
   });
 
   document.getElementById("signup-form")?.addEventListener("submit", async (event) => {
@@ -50,7 +56,7 @@ import BaseLayout from "../layouts/BaseLayout.astro";
         email: String(data.get("email") ?? ""),
         password: String(data.get("password") ?? ""),
       });
-      window.location.assign("/dashboard");
+      window.location.assign(next);
     } catch (err) {
       if (error) error.textContent = err instanceof Error ? err.message : "Could not create the account.";
     }
@@ -58,9 +64,8 @@ import BaseLayout from "../layouts/BaseLayout.astro";
 
   document.getElementById("google-btn")?.addEventListener("click", async () => {
     try {
-      const providerUrl = await signInWithGoogle();
-      // Neon returns the Google start URL. Open that instead of /dashboard.
-      window.location.assign(providerUrl ?? "/dashboard");
+      const providerUrl = await signInWithGoogle(next);
+      window.location.assign(providerUrl ?? next);
     } catch (err) {
       if (error) error.textContent = err instanceof Error ? err.message : "Google sign-in failed.";
     }

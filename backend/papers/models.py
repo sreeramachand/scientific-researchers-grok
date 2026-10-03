@@ -17,7 +17,7 @@ class Paper(models.Model):
     sku = models.CharField(max_length=80, unique=True)
     price = models.DecimalField(max_digits=8, decimal_places=2)
     abstract = models.TextField()
-    pdf_filename = models.CharField(max_length=160, help_text="File name inside frontend/public/papers/")
+    pdf_filename = models.CharField(max_length=160, help_text="File name inside backend/private_papers/")
     is_published = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

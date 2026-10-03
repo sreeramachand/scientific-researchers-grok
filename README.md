@@ -92,11 +92,15 @@ API routes:
 - `GET /api/entitlements/`
 - `GET /api/entitlements/access/?sku=`
 - `GET /api/entitlements/subscription/`
+- `POST /api/entitlements/purchases/` (signed-in checkout confirmation; returns a download token)
+- `GET /api/entitlements/papers/<sku>/file/?access=` (full PDF for that purchase only)
 - `POST /api/entitlements/snipcart/webhook/` (Snipcart `order.completed`; requires `SNIPCART_API_KEY`)
 
-## Upload paper PDFs
+## Paper PDFs
 
-Place production PDFs in `frontend/public/papers/` using the file names in `frontend/public/papers/README.md`. The glioblastoma manuscript is `gene-co-expression-networks-in-glioblastoma-multiforme.pdf`. Its on-site preview is the one-page file under `frontend/public/papers/previews/`.
+Full PDFs live in `backend/private_papers/` and are not part of the public site. A visitor downloads one only after a signed-in Snipcart purchase for that paper. The glioblastoma first page stays public at `frontend/public/papers/previews/gene-co-expression-networks-in-glioblastoma-multiforme-page-1.pdf`.
+
+`SNIPCART_API_KEY` is the Snipcart secret, not the public key. When it is set, purchase confirmation checks the order with Snipcart before issuing a download token. When it is unset, a signed-in checkout confirmation still records the purchase so the buyer can open the file, and the full PDF remains off the public site. The webhook still returns 503 until the secret is set. Do not commit the secret.
 
 ## Deploy (single VPS)
 

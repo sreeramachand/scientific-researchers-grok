@@ -22,18 +22,23 @@ import BaseLayout from "../layouts/BaseLayout.astro";
       <button id="google-btn" class="btn btn-secondary" type="button">Continue with Google</button>
       <p id="auth-status" class="text-sm text-slate-600" role="status"></p>
       <p id="auth-error" class="text-sm text-red-600" role="alert"></p>
-      <p class="text-sm text-slate-600">Need an account? <a class="font-semibold text-brand-700" href="/signup">Sign Up</a></p>
+      <p class="text-sm text-slate-600">Need an account? <a id="signup-link" class="font-semibold text-brand-700" href="/signup">Sign Up</a></p>
     </form>
   </section>
 </BaseLayout>
 
 <script>
   import { getSession, signIn, signInWithGoogle } from "../lib/auth";
+  import { safeNextPath } from "../lib/return-path";
 
   const params = new URLSearchParams(window.location.search);
-  const next = params.get("next") || "/dashboard";
+  const next = safeNextPath(params.get("next"));
   const error = document.getElementById("auth-error");
   const status = document.getElementById("auth-status");
+  const signup = document.getElementById("signup-link");
+  if (signup instanceof HTMLAnchorElement) {
+    signup.href = `/signup?next=${encodeURIComponent(next)}`;
+  }
   if (params.get("reset") === "1" && status) {
     status.textContent = "Password updated. Sign in with your new password.";
   }
@@ -59,8 +64,8 @@ import BaseLayout from "../layouts/BaseLayout.astro";
 
   document.getElementById("google-btn")?.addEventListener("click", async () => {
     try {
-      const providerUrl = await signInWithGoogle();
-      // Neon returns the Google start URL. Open that instead of /dashboard.
+      const providerUrl = await signInWithGoogle(next);
+      // Neon returns the Google start URL. Open that, then come back to next.
       window.location.assign(providerUrl ?? next);
     } catch (err) {
       if (error) error.textContent = err instanceof Error ? err.message : "Google sign-in failed.";

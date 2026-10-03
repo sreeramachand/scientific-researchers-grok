@@ -14,6 +14,8 @@ class Entitlement(models.Model):
     paper = models.ForeignKey(Paper, on_delete=models.CASCADE, related_name="entitlements")
     source = models.CharField(max_length=20, choices=Source.choices, default=Source.PAPER)
     snipcart_invoice = models.CharField(max_length=120, blank=True)
+    snipcart_order_token = models.CharField(max_length=80, blank=True, db_index=True)
+    access_token = models.CharField(max_length=64, unique=True, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

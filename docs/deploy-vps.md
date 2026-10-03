@@ -84,7 +84,7 @@ Edit `/etc/scientific-researchers/env` (mode `0640`, group `sr`). Start from `in
 | `CSRF_TRUSTED_ORIGINS` | Recommended | `https://scientificresearchers.org` |
 | `BEHIND_PROXY` | **Yes** | `true` so Django trusts `X-Forwarded-Proto` from Caddy |
 | `NEON_AUTH_BASE_URL` | If using Neon Auth | Same Auth URL as the frontend |
-| `SNIPCART_API_KEY` | To verify paid PDF orders | Snipcart **secret** API key, not `PUBLIC_SNIPCART_API_KEY`. Set it only in this server env file. Do not commit it. Until it is set, `POST /api/entitlements/snipcart/webhook/` refuses unverified orders. Browser checkout still uses the public key. |
+| `SNIPCART_API_KEY` | To verify paid PDF orders with Snipcart | Snipcart **secret** API key, not `PUBLIC_SNIPCART_API_KEY`. Set it only in this server env file. Do not commit it. Until it is set, `POST /api/entitlements/snipcart/webhook/` refuses unverified orders. A signed-in checkout can still record a purchase and download that PDF; the full file is not in the public site. When this secret is set, the purchase endpoint checks the order with Snipcart before issuing the file. |
 
 Caddy-only values in `/etc/scientific-researchers/caddy.env`:
 

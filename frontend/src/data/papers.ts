@@ -14,7 +14,6 @@ export type Paper = {
   abstract: string;
   highlights: string[];
   methods: string;
-  pdfPath: string;
   /** Public single-page preview. Omit when the paper has no first-page file. */
   previewPath?: string;
 };
@@ -64,7 +63,6 @@ export const papers: Paper[] = [
     ],
     methods:
       "Preprocessing followed fMRIPrep-compatible inputs. First-level models used Nilearn’s FirstLevelModel with canonical HRF and motion regressors. Second-level inference used permutation tests (10,000 iterations) with cluster-level FWE control. Harmonization compared ComBat and linear mixed-effects site terms.",
-    pdfPath: "/papers/nilearn-image-paper.pdf",
   },
   {
     slug: "gbm-signatures",
@@ -87,7 +85,6 @@ export const papers: Paper[] = [
     ],
     methods:
       "Public glioblastoma and normal brain expression sets were filtered, log-transformed, and aligned to a shared gene set. Pairwise Pearson correlations became weighted, signed edges only when p < 0.05 after Benjamini–Hochberg correction. The networks were built in Python with NetworkX. Power-law fits used maximum likelihood and a bootstrap goodness-of-fit check; clique size, coreness, and algebraic connectivity were compared with Mann–Whitney U tests. Glioblastoma differed from normal brain on every signature tested.",
-    pdfPath: "/papers/gene-co-expression-networks-in-glioblastoma-multiforme.pdf",
     previewPath: "/papers/previews/gene-co-expression-networks-in-glioblastoma-multiforme-page-1.pdf",
   },
   {
@@ -110,7 +107,6 @@ export const papers: Paper[] = [
     ],
     methods:
       "Consecutive treatment-naive tumors were imaged with widefield color, autofluorescence, and standardized B-scan. Features were extracted with a controlled annotation protocol. Outcomes included GEP class and time to metastasis, modeled with Fine–Gray competing risks.",
-    pdfPath: "/papers/uveal-melanoma.pdf",
   },
   {
     slug: "diabetic-retinopathy",
@@ -132,7 +128,6 @@ export const papers: Paper[] = [
     ],
     methods:
       "Models were trained with lesion-aware augmentations and temperature scaling. Operating points were chosen on a validation clinic, then frozen. A second reader reviewed model-negative studies in a 10% audit plus all high-uncertainty cases.",
-    pdfPath: "/papers/diabetic-retinopathy.pdf",
   },
   {
     slug: "lung-paper",
@@ -154,7 +149,6 @@ export const papers: Paper[] = [
     ],
     methods:
       "Nodules were segmented with a dual-reader protocol. Radiomics features were ICC-filtered. Circulating markers were assayed in duplicate. Joint models predicted cancer diagnosis and 12-week response, with decision-curve analysis versus volume doubling time alone.",
-    pdfPath: "/papers/lung-paper.pdf",
   },
   {
     slug: "colon-cancer-paper",
@@ -176,7 +170,6 @@ export const papers: Paper[] = [
     ],
     methods:
       "Resection slides were tiled and embedded with a weakly supervised encoder. RNA-seq subtypes were assigned with a published CMS-compatible classifier. Benefit analyses used inverse-probability weighting with pre-specified confounders.",
-    pdfPath: "/papers/colon-cancer-paper.pdf",
   },
 ];
 

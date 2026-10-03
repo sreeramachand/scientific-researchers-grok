@@ -140,3 +140,5 @@ REST_FRAMEWORK = {
 
 NEON_AUTH_BASE_URL = os.getenv("NEON_AUTH_BASE_URL", "").strip()
 SNIPCART_API_KEY = os.getenv("SNIPCART_API_KEY", "").strip()
+# Full project PDFs. Not served as static files. Download requires a purchase token.
+PAPER_FILES_ROOT = Path(os.getenv("PAPER_FILES_ROOT", BASE_DIR / "private_papers"))
