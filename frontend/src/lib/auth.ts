@@ -162,16 +162,33 @@ export async function signIn(input: { email: string; password: string }): Promis
   return user;
 }
 
-export async function signInWithGoogle(): Promise<void> {
+/** Absolute http(s) URL from Neon Auth `POST /sign-in/social` (`{ redirect, url }`). */
+export function googleRedirectUrl(payload: unknown): string {
+  const url =
+    payload && typeof payload === "object" && "url" in payload
+      ? (payload as { url?: unknown }).url
+      : undefined;
+  if (typeof url !== "string" || !/^https?:\/\//i.test(url)) {
+    throw new Error("Google sign-in did not return a redirect URL.");
+  }
+  return url;
+}
+
+/**
+ * Starts Google sign-in.
+ * With Neon Auth, returns the provider URL the browser must open.
+ * Without it, stores a local demo session and returns null.
+ */
+export async function signInWithGoogle(): Promise<string | null> {
   if (neonUrl()) {
-    await neonJson("/sign-in/social", {
+    const data = await neonJson("/sign-in/social", {
       method: "POST",
       body: JSON.stringify({
         provider: "google",
         callbackURL: `${window.location.origin}/dashboard`,
       }),
     });
-    return;
+    return googleRedirectUrl(data);
   }
   const user: AuthUser = {
     id: "demo-google",
@@ -181,6 +198,7 @@ export async function signInWithGoogle(): Promise<void> {
     provider: "google",
   };
   writeSession(user);
+  return null;
 }
 
 export async function signOut(): Promise<void> {
