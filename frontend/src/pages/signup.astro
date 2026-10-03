@@ -1,6 +1,5 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
-import { env } from "../lib/env";
 ---
 
 <BaseLayout title="Sign Up" description="Create a Scientific Researchers account with email and password or Google.">
@@ -27,7 +26,6 @@ import { env } from "../lib/env";
       <button class="btn btn-primary" type="submit">Create account</button>
       <button id="google-btn" class="btn btn-secondary" type="button">Continue with Google</button>
       <p id="auth-error" class="text-sm text-red-600" role="alert"></p>
-      {!env.neonAuthUrl && <p class="text-xs text-slate-500">Neon Auth is not configured. Accounts created here stay in this browser until you add PUBLIC_NEON_AUTH_URL.</p>}
       <p class="text-sm text-slate-600">Already registered? <a class="font-semibold text-brand-700" href="/login">Login</a></p>
     </form>
   </section>

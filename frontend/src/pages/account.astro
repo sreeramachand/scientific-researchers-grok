@@ -1,12 +1,11 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
-import { env } from "../lib/env";
 ---
 
 <BaseLayout title="Account" description="Manage your Scientific Researchers username, password, email, billing, and subscriptions.">
   <section id="account-app" class="mx-auto hidden max-w-4xl px-4 py-10 lg:px-6">
     <h1 class="font-serif text-4xl">Account</h1>
-    <p class="mt-2 text-slate-600">Profile, security, billing, and subscription controls. Neon Auth and billing APIs are wired through environment placeholders.</p>
+    <p class="mt-2 text-slate-600">Update your profile, password, email, billing, and subscriptions.</p>
 
     <div class="mt-8 grid gap-6">
       <form id="profile-form" class="card grid gap-4 p-6">
@@ -25,14 +24,11 @@ import { env } from "../lib/env";
 
       <section class="card grid gap-4 p-6">
         <h2 class="font-serif text-2xl">Password</h2>
-        <p class="text-sm text-slate-600">Current password is never shown. Use the form below to rotate it through Neon Auth when configured.</p>
-        <div class="field">
-          <label for="current-password-display">Current password</label>
-          <input id="current-password-display" value="••••••••" readonly />
-        </div>
+        <p id="password-google" class="hidden text-sm text-slate-600">You sign in with Google, so this account does not have a password to change.</p>
         <form id="password-form" class="grid gap-4">
+          <p class="text-sm text-slate-600">Enter your current password to set a new one.</p>
           <div class="field">
-            <label for="currentPassword">Confirm current password</label>
+            <label for="currentPassword">Current password</label>
             <input id="currentPassword" name="currentPassword" type="password" autocomplete="current-password" required />
           </div>
           <div class="field">
@@ -60,7 +56,7 @@ import { env } from "../lib/env";
 
       <section class="card grid gap-4 p-6">
         <h2 class="font-serif text-2xl">Billing</h2>
-        <p class="text-sm text-slate-600">Card details are collected by Snipcart at checkout. This panel is the account-side placeholder for a billing portal API.</p>
+        <p class="text-sm text-slate-600">Paper purchases are charged at checkout to the email on this account.</p>
         <div class="grid gap-3 sm:grid-cols-2">
           <div class="rounded-xl border border-slate-200 p-4">
             <p class="text-xs font-bold uppercase tracking-wide text-slate-500">Payment method</p>
@@ -72,10 +68,9 @@ import { env } from "../lib/env";
           </div>
         </div>
         <div class="flex flex-wrap gap-3">
-          <button id="update-billing" class="btn btn-secondary" type="button">Update billing details</button>
+          <a class="btn btn-secondary" href="/contact">Billing question</a>
           <a class="btn btn-ghost" href="/#pricing">View plans</a>
         </div>
-        <p id="billing-note" class="text-sm text-slate-500"></p>
       </section>
 
       <section class="card grid gap-4 p-6">
@@ -92,16 +87,16 @@ import { env } from "../lib/env";
         <ul id="purchase-list" class="space-y-2 text-sm text-slate-700"></ul>
       </section>
     </div>
-    {!env.neonAuthUrl && <p class="mt-6 text-xs text-slate-500">Neon Auth URL is empty. Profile edits stay in local demo storage and are ready to post to Better Auth endpoints once PUBLIC_NEON_AUTH_URL is set.</p>}
   </section>
 </BaseLayout>
 
 <script>
-  import { changeEmail, changePassword, requireAuth, updateProfile } from "../lib/auth";
+  import { canChangePassword, changeEmail, changePassword, getSession, requireAuth, updateProfile } from "../lib/auth";
   import { cancelSubscription, getSubscription, listEntitlements } from "../lib/entitlements";
 
-  const user = requireAuth();
-  if (!user) throw new Error("redirecting");
+  const initialUser = requireAuth();
+  if (!initialUser) throw new Error("redirecting");
+  const user = (await getSession()) ?? initialUser;
 
   document.getElementById("account-app")?.classList.remove("hidden");
   const name = document.getElementById("name") as HTMLInputElement;
@@ -136,7 +131,7 @@ import { env } from "../lib/env";
         : "<li>No paper purchases yet.</li>";
     }
     const method = document.getElementById("billing-method");
-    if (method) method.textContent = sub || items.length ? "Demo wallet / Snipcart checkout" : "No card on file";
+    if (method) method.textContent = items.length ? "Charged at checkout" : "No card on file";
   }
 
   document.getElementById("profile-form")?.addEventListener("submit", async (event) => {
@@ -165,18 +160,17 @@ import { env } from "../lib/env";
     const next = await changeEmail(newEmail.value);
     currentEmail.value = next.email;
     if (billingEmail) billingEmail.textContent = next.email;
-    note("email-form", "Email updated. Confirm the change if Neon Auth sends a verification link.");
-  });
-
-  document.getElementById("update-billing")?.addEventListener("click", () => {
-    const el = document.getElementById("billing-note");
-    if (el) el.textContent = "Billing portal placeholder: connect Snipcart customer dashboard or your billing API here.";
+    note("email-form", "Email updated. Check your inbox if a confirmation message arrives.");
   });
 
   document.getElementById("cancel-sub")?.addEventListener("click", () => {
     cancelSubscription();
     renderCommerce();
   });
+
+  const passwordAllowed = await canChangePassword();
+  document.getElementById("password-form")?.classList.toggle("hidden", !passwordAllowed);
+  document.getElementById("password-google")?.classList.toggle("hidden", passwordAllowed);
 
   renderCommerce();
   window.addEventListener("sr-entitlements-changed", renderCommerce);

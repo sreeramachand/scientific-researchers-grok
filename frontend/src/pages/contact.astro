@@ -9,7 +9,7 @@ import { site } from "../data/site";
   <PageHero
     kicker="Contact"
     title="Write to the editorial office"
-    lede="Use this form for publication questions, community programs, awards, or access issues. The message is sent through Web3Forms when an access key is configured."
+    lede="Use this form for publication questions, community programs, awards, or access issues."
   />
   <section class="mx-auto grid max-w-6xl gap-8 px-4 py-12 lg:grid-cols-[1.1fr_0.9fr] lg:px-6">
     <form id="contact-form" class="card grid gap-4 p-6 sm:p-8" novalidate>
@@ -53,6 +53,8 @@ import { site } from "../data/site";
 </BaseLayout>
 
 <script>
+  import { site } from "../data/site";
+
   const form = document.getElementById("contact-form") as HTMLFormElement | null;
   const status = document.getElementById("contact-status");
   const key = (import.meta.env.PUBLIC_WEB3FORMS_ACCESS_KEY as string | undefined)?.trim();
@@ -61,8 +63,7 @@ import { site } from "../data/site";
     event.preventDefault();
     if (!form) return;
     if (!key) {
-      if (status) status.textContent = "Message captured locally. Add PUBLIC_WEB3FORMS_ACCESS_KEY to deliver through Web3Forms.";
-      form.reset();
+      if (status) status.textContent = `We could not send this message from the site. Email ${site.email} and we will reply.`;
       return;
     }
     if (status) status.textContent = "Sending…";
