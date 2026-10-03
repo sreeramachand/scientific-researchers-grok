@@ -53,8 +53,9 @@ import { env } from "../lib/env";
 
   document.getElementById("google-btn")?.addEventListener("click", async () => {
     try {
-      await signInWithGoogle();
-      window.location.assign(next);
+      const providerUrl = await signInWithGoogle();
+      // Neon returns the Google start URL. Open that instead of /dashboard.
+      window.location.assign(providerUrl ?? next);
     } catch (err) {
       if (error) error.textContent = err instanceof Error ? err.message : "Google sign-in failed.";
     }
