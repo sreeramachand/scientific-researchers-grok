@@ -1,3 +1,4 @@
+import { googleSessionPath, userFromNeonSession } from "./google-callback";
 import { safeNextPath } from "./return-path";
 import {
   findLocalAccount,
@@ -265,18 +266,45 @@ export function googleRedirectUrl(payload: unknown): string {
 }
 
 /**
+ * Exchanges Neon's OAuth verifier for the Google user and stores that session.
+ * The verifier is only valid together with the challenge cookie from sign-in/social.
+ */
+export async function establishGoogleSession(verifier: string): Promise<AuthUser> {
+  if (!verifier.trim()) throw new Error("Google sign-in could not be verified. Try again.");
+  if (!neonUrl()) throw new Error("Google sign-in is not available.");
+  const data = await neonJson(googleSessionPath(verifier), { method: "GET" });
+  const profile = userFromNeonSession(data);
+  if (!profile) throw new Error("Google sign-in did not create a session.");
+  const user: AuthUser = {
+    id: profile.id,
+    name: profile.name,
+    username: profile.name.toLowerCase().replace(/\s+/g, "."),
+    email: profile.email,
+    image: profile.image,
+    provider: "google",
+  };
+  writeSession(await withProviders(user));
+  return user;
+}
+
+/**
  * Starts Google sign-in.
  * With Neon Auth, returns the provider URL the browser must open.
  * Without it, stores a local demo session and returns null.
  */
-export async function signInWithGoogle(nextPath = "/dashboard"): Promise<string | null> {
+export async function signInWithGoogle(nextPath = "/dashboard", from: "login" | "signup" = "login"): Promise<string | null> {
   const next = safeNextPath(nextPath);
   if (neonUrl()) {
+    const callback = new URL("/auth/callback", window.location.origin);
+    callback.searchParams.set("next", next);
+    const errorPage = new URL(from === "signup" ? "/signup" : "/login", window.location.origin);
+    errorPage.searchParams.set("next", next);
     const data = await neonJson("/sign-in/social", {
       method: "POST",
       body: JSON.stringify({
         provider: "google",
-        callbackURL: `${window.location.origin}${next}`,
+        callbackURL: callback.toString(),
+        errorCallbackURL: errorPage.toString(),
       }),
     });
     return googleRedirectUrl(data);
