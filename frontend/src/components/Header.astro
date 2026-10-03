@@ -158,7 +158,7 @@ const path = Astro.url.pathname;
 </header>
 
 <script>
-  import { getSession, onAuthChange, signOut } from "../lib/auth";
+  import { getSession, onAuthChange, readSession, signOut } from "../lib/auth";
 
   const guest = document.getElementById("auth-guest");
   const userBox = document.getElementById("auth-user");
@@ -170,7 +170,8 @@ const path = Astro.url.pathname;
   const mobile = document.getElementById("mobile-nav");
 
   async function syncAuth() {
-    const user = await getSession();
+    // get-session is often null after Google, while the dashboard gate still has this session.
+    const user = (await getSession()) ?? readSession();
     const signedIn = Boolean(user);
     guest?.classList.add("hidden");
     guest?.classList.toggle("xl:flex", !signedIn);
