@@ -1,5 +1,8 @@
-from django.contrib.auth import get_user_model
+import secrets
+
+from django.http import FileResponse, HttpResponse
 from django.utils.decorators import method_decorator
+from django.views.decorators.clickjacking import xframe_options_sameorigin
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
@@ -7,7 +10,9 @@ from rest_framework.views import APIView
 
 from papers.models import Paper
 
+from .files import resolve_paper_file
 from .models import Entitlement, Subscription
+from .purchases import PurchaseError, record_purchase, user_for_order_email
 from .serializers import EntitlementSerializer, SubscriptionSerializer
 from .snipcart import order_is_paid, paper_ids, secret_configured, token_is_valid
 
@@ -31,25 +36,6 @@ class AccessView(APIView):
         paper = Paper.objects.filter(sku=sku).first()
         entitled = bool(paper and Entitlement.objects.filter(user=request.user, paper=paper).exists())
         return Response({"access": entitled, "reason": "paper" if entitled else "none"})
-
-
-def user_for_order_email(email: str):
-    User = get_user_model()
-    normalized = email.strip().lower()
-    existing = User.objects.filter(email__iexact=normalized).first()
-    if existing:
-        return existing
-    local = normalized.split("@", 1)[0]
-    base = "".join(char for char in local if char.isalnum() or char in "._-")[:30] or "reader"
-    username = base
-    suffix = 1
-    while User.objects.filter(username=username).exists():
-        suffix += 1
-        username = f"{base[:20]}-{suffix}"
-    user = User(username=username, email=normalized)
-    user.set_unusable_password()
-    user.save()
-    return user
 
 
 @method_decorator(csrf_exempt, name="dispatch")
@@ -91,23 +77,87 @@ class SnipcartWebhookView(APIView):
         if not email:
             return Response({"detail": "Order is missing a customer email."}, status=400)
 
-        invoice = str(content.get("invoiceNumber") or content.get("token") or "")
+        invoice = str(content.get("invoiceNumber") or "")
+        order_token = str(content.get("token") or "")[:80]
         user = user_for_order_email(email)
         granted = []
         for sku in paper_ids(content):
             paper = Paper.objects.filter(sku=sku, is_published=True).first()
             if not paper:
                 continue
-            Entitlement.objects.update_or_create(
+            defaults = {
+                "source": Entitlement.Source.PAPER,
+                "snipcart_invoice": invoice[:120],
+            }
+            if order_token:
+                defaults["snipcart_order_token"] = order_token
+            entitlement, _created = Entitlement.objects.update_or_create(
                 user=user,
                 paper=paper,
-                defaults={
-                    "source": Entitlement.Source.PAPER,
-                    "snipcart_invoice": invoice[:120],
-                },
+                defaults=defaults,
             )
+            if not entitlement.access_token:
+                entitlement.access_token = secrets.token_urlsafe(32)
+                entitlement.save(update_fields=["access_token"])
             granted.append(sku)
         return Response({"ok": True, "granted": granted})
+
+
+@method_decorator(csrf_exempt, name="dispatch")
+class PurchaseView(APIView):
+    """Save a completed checkout for the signed-in buyer and return a download token.
+
+    With ``SNIPCART_API_KEY`` set, the order is confirmed with Snipcart first.
+    Without that secret, the signed-in checkout is still recorded so the buyer
+    can open the PDF. Callers who have not purchased receive no token.
+    """
+
+    authentication_classes = []
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        payload = request.data if isinstance(request.data, dict) else {}
+        try:
+            entitlement = record_purchase(
+                email=str(payload.get("email") or ""),
+                sku=str(payload.get("sku") or ""),
+                order_token=str(payload.get("orderToken") or payload.get("order_token") or ""),
+                invoice=str(payload.get("invoiceNumber") or payload.get("invoice_number") or ""),
+            )
+        except PurchaseError as error:
+            return Response({"detail": error.detail}, status=error.status)
+        return Response(
+            {
+                "sku": entitlement.paper.sku,
+                "title": entitlement.paper.title,
+                "access_token": entitlement.access_token,
+            }
+        )
+
+
+@xframe_options_sameorigin
+def paper_file(request, sku: str):
+    """Serve a full PDF only to the buyer who holds that purchase's access token."""
+    token = (request.GET.get("access") or "").strip()
+    if len(token) < 20:
+        return HttpResponse("This PDF is available after purchase.", status=403, content_type="text/plain")
+    entitlement = (
+        Entitlement.objects.filter(access_token=token, paper__sku=sku, paper__is_published=True)
+        .select_related("paper")
+        .first()
+    )
+    if entitlement is None:
+        return HttpResponse("This PDF is available after purchase.", status=403, content_type="text/plain")
+    path = resolve_paper_file(entitlement.paper.pdf_filename)
+    if path is None:
+        return HttpResponse("This PDF is not available.", status=404, content_type="text/plain")
+    response = FileResponse(path.open("rb"), content_type="application/pdf")
+    disposition = "attachment" if request.GET.get("download") == "1" else "inline"
+    response["Content-Disposition"] = f'{disposition}; filename="{path.name}"'
+    response["Cache-Control"] = "private, no-store"
+    response["X-Content-Type-Options"] = "nosniff"
+    response["Referrer-Policy"] = "no-referrer"
+    return response
 
 
 class SubscriptionView(APIView):

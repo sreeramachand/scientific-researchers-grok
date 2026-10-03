@@ -1,3 +1,4 @@
+import { safeNextPath } from "./return-path";
 import {
   findLocalAccount,
   GoogleOnlyAccountError,
@@ -268,13 +269,14 @@ export function googleRedirectUrl(payload: unknown): string {
  * With Neon Auth, returns the provider URL the browser must open.
  * Without it, stores a local demo session and returns null.
  */
-export async function signInWithGoogle(): Promise<string | null> {
+export async function signInWithGoogle(nextPath = "/dashboard"): Promise<string | null> {
+  const next = safeNextPath(nextPath);
   if (neonUrl()) {
     const data = await neonJson("/sign-in/social", {
       method: "POST",
       body: JSON.stringify({
         provider: "google",
-        callbackURL: `${window.location.origin}/dashboard`,
+        callbackURL: `${window.location.origin}${next}`,
       }),
     });
     return googleRedirectUrl(data);

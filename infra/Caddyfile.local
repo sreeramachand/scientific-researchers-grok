@@ -17,6 +17,11 @@ http://127.0.0.1:2080 {
 		reverse_proxy 127.0.0.1:8007
 	}
 
+	@public_full_pdf path /papers/*.pdf
+	handle @public_full_pdf {
+		respond "Not found" 404
+	}
+
 	handle {
 		reverse_proxy 127.0.0.1:43147
 	}

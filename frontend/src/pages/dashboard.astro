@@ -16,6 +16,11 @@ const panels = [
   <div id="dash-app" class="mx-auto hidden max-w-6xl px-4 py-8 lg:px-6">
     <h1 class="font-serif text-4xl">Dashboard</h1>
     <p class="mt-2 text-slate-600">Awards, projects, submissions, publications, webinars, and posters for your account.</p>
+    <section class="card mt-8 p-6">
+      <h2 class="font-serif text-2xl">Your papers</h2>
+      <ul id="purchased-list" class="mt-4 space-y-3"></ul>
+      <p id="purchased-empty" class="mt-4 text-sm text-slate-600">Papers you purchase appear here.</p>
+    </section>
     <div class="mt-8 grid gap-6 lg:grid-cols-[16rem_1fr]">
       <nav class="card h-fit p-3" aria-label="Dashboard sections">
         {panels.map((panel, index) => (
@@ -104,9 +109,42 @@ const panels = [
 
 <script>
   import { requireAuth } from "../lib/auth";
+  import { purchasedFileUrl, purchasesForEmail } from "../lib/purchases";
 
-  if (!requireAuth()) throw new Error("redirecting");
+  const user = requireAuth();
+  if (!user) throw new Error("redirecting");
   document.getElementById("dash-app")?.classList.remove("hidden");
+
+  const purchased = purchasesForEmail(user.email);
+  const list = document.getElementById("purchased-list");
+  const empty = document.getElementById("purchased-empty");
+  if (purchased.length && list && empty) {
+    empty.classList.add("hidden");
+    for (const purchase of purchased) {
+      const item = document.createElement("li");
+      item.className = "rounded-xl border border-slate-200 p-4";
+      const heading = document.createElement("p");
+      heading.className = "font-semibold";
+      heading.textContent = purchase.title;
+      const actions = document.createElement("p");
+      actions.className = "mt-2 flex gap-4 text-sm font-semibold";
+      const open = document.createElement("a");
+      open.className = "text-brand-700";
+      open.href = purchasedFileUrl(purchase.sku, purchase.accessToken);
+      open.target = "_blank";
+      open.rel = "noopener";
+      open.referrerPolicy = "no-referrer";
+      open.textContent = "Open PDF";
+      const download = document.createElement("a");
+      download.className = "text-brand-700";
+      download.href = purchasedFileUrl(purchase.sku, purchase.accessToken, true);
+      download.referrerPolicy = "no-referrer";
+      download.textContent = "Download PDF";
+      actions.append(open, download);
+      item.append(heading, actions);
+      list.append(item);
+    }
+  }
 
   const links = document.querySelectorAll<HTMLButtonElement>(".dash-link");
   const panels = document.querySelectorAll<HTMLElement>(".dash-panel");

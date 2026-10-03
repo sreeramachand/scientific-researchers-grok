@@ -45,6 +45,12 @@
 		}
 	}
 
+	# Full project PDFs are not public files. Serve only the first-page previews from disk.
+	@public_full_pdf path /papers/*.pdf
+	handle @public_full_pdf {
+		respond "Not found" 404
+	}
+
 	# Astro static build (frontend/dist rsynced to SITE_ROOT).
 	handle {
 		root * {$SITE_ROOT}

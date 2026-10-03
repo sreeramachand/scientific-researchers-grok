@@ -32,7 +32,7 @@ jobs:
         run: npm ci
 
       - name: Password reset logic
-        run: node --experimental-strip-types --test src/lib/local-auth.test.ts
+        run: node --experimental-strip-types --test src/lib/local-auth.test.ts src/lib/paywall.test.ts
 
       - name: Build
         run: npm run build

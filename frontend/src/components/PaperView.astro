@@ -42,24 +42,28 @@ const byline = [paper.authors, paper.year ? String(paper.year) : "", paper.doi ?
       <aside class="card h-fit p-6">
         <p class="text-sm font-bold uppercase tracking-wide text-slate-500">Full paper</p>
         <p class="mt-2 font-serif text-3xl">${paper.price}</p>
-        <p class="mt-2 text-sm text-slate-600">One-time purchase of this PDF, or access with an active Researcher or Lab subscription.</p>
+        <p class="mt-2 text-sm text-slate-600">One-time purchase of this PDF.</p>
         {env.snipcartKey ? (
           <button
             type="button"
-            class="btn btn-primary snipcart-add-item mt-5 w-full"
-            data-item-id={paper.sku}
-            data-item-price={paper.price}
-            data-item-url={productUrl}
-            data-item-name={paper.title}
-            data-item-description={paper.subtitle}
-            data-item-max-quantity="1"
-            data-paper-sku={paper.sku}
+            class="btn btn-primary mt-5 w-full"
+            id="purchase-pdf"
+            data-sku={paper.sku}
+            data-price={paper.price}
+            data-name={paper.title}
+            data-description={paper.subtitle}
+            data-product-url={productUrl}
           >
             Purchase PDF
           </button>
         ) : (
           <a class="btn btn-primary mt-5 w-full" href="/contact">Ask about this PDF</a>
         )}
+        <div id="owned-actions" class="mt-5 hidden grid gap-3">
+          <a id="open-pdf" class="btn btn-primary w-full" target="_blank" rel="noopener" referrerpolicy="no-referrer">Open PDF</a>
+          <a id="download-pdf" class="btn btn-secondary w-full" referrerpolicy="no-referrer">Download PDF</a>
+        </div>
+        <p id="purchase-note" class="mt-3 text-sm text-slate-600" role="status"></p>
         <a class="btn btn-secondary mt-3 w-full" href="/#pricing">See subscriptions</a>
       </aside>
     </div>
@@ -70,8 +74,7 @@ const byline = [paper.authors, paper.year ? String(paper.year) : "", paper.doi ?
         id="paywall"
         class="relative mt-4 overflow-hidden rounded-2xl border border-slate-200 bg-slate-50"
         data-sku={paper.sku}
-        data-src={paper.pdfPath}
-        data-preview={paper.previewPath ?? ""}
+        data-title={paper.title}
       >
         <div id="preview-layer">
           {paper.previewPath ? (
@@ -90,7 +93,7 @@ const byline = [paper.authors, paper.year ? String(paper.year) : "", paper.doi ?
             <div id="locked-layer" class="grid min-h-[24rem] place-items-center bg-white/80 p-6 text-center">
               <div class="max-w-md">
                 <p class="font-serif text-2xl">This PDF is locked</p>
-                <p class="mt-2 text-slate-600">The abstract above is free. Purchase this paper or keep an active subscription to open the file.</p>
+                <p class="mt-2 text-slate-600">The abstract above is free. Purchase this paper to open the file.</p>
                 {env.snipcartKey ? (
                   <button type="button" class="btn btn-primary mt-5" id="unlock-cta">Unlock this paper</button>
                 ) : (
@@ -108,69 +111,153 @@ const byline = [paper.authors, paper.year ? String(paper.year) : "", paper.doi ?
 
 <script>
   import { papers } from "../data/papers";
-  import { grantPaper, hasAccess } from "../lib/entitlements";
+  import { getSession, readSession } from "../lib/auth";
+  import { invoiceFrom, orderTokenFrom, paperSkusInOrder } from "../lib/paper-file";
+  import { claimPurchase, purchaseFor, purchasedFileUrl, type StoredPurchase } from "../lib/purchases";
+  import { safeNextPath } from "../lib/return-path";
 
   const root = document.getElementById("paywall");
   const frame = document.getElementById("pdf-frame") as HTMLIFrameElement | null;
   const preview = document.getElementById("preview-layer");
+  const note = document.getElementById("purchase-note");
   const sku = root?.dataset.sku ?? "";
-  const src = root?.dataset.src ?? "";
+  const title = root?.dataset.title ?? sku;
   const key = (import.meta.env.PUBLIC_SNIPCART_API_KEY as string | undefined)?.trim();
   const known = new Set(papers.map((paper) => paper.sku));
 
-  function orderItemIds(payload: unknown): string[] {
-    if (!payload || typeof payload !== "object") return [];
-    const record = payload as { items?: unknown; cart?: { items?: unknown } };
-    const items = Array.isArray(record.items)
-      ? record.items
-      : Array.isArray(record.cart?.items)
-        ? record.cart.items
-        : [];
-    return items
-      .map((item) => {
-        if (!item || typeof item !== "object") return "";
-        const row = item as { id?: unknown; productId?: unknown };
-        return String(row.id ?? row.productId ?? "");
-      })
-      .filter((id) => known.has(id));
+  type CartItem = {
+    id: string;
+    name: string;
+    price: number;
+    url: string;
+    description: string;
+    quantity: number;
+    maxQuantity: number;
+  };
+
+  type SnipcartApi = {
+    api?: {
+      cart?: {
+        items?: {
+          add?: (item: CartItem) => Promise<unknown>;
+        };
+      };
+    };
+    events?: {
+      on: (name: string, fn: (payload: unknown) => void) => void;
+    };
+  };
+
+  function snipcart(): SnipcartApi | undefined {
+    return (window as Window & { Snipcart?: SnipcartApi }).Snipcart;
   }
 
-  function reveal() {
-    if (!hasAccess(sku) || !frame) return;
-    frame.src = src;
+  async function showOwned(purchase: StoredPurchase) {
+    const open = document.getElementById("open-pdf");
+    const download = document.getElementById("download-pdf");
+    if (open instanceof HTMLAnchorElement) {
+      open.href = purchasedFileUrl(purchase.sku, purchase.accessToken);
+    }
+    if (download instanceof HTMLAnchorElement) {
+      download.href = purchasedFileUrl(purchase.sku, purchase.accessToken, true);
+    }
+    document.getElementById("owned-actions")?.classList.remove("hidden");
+    document.getElementById("purchase-pdf")?.classList.add("hidden");
+    document.getElementById("unlock-cta")?.classList.add("hidden");
+    if (!frame) return;
+    const response = await fetch(purchasedFileUrl(purchase.sku, purchase.accessToken));
+    if (!response.ok) return;
+    frame.src = URL.createObjectURL(await response.blob());
     frame.classList.remove("hidden");
     preview?.classList.add("hidden");
   }
 
-  function grantConfirmed(payload: unknown) {
-    for (const id of orderItemIds(payload)) grantPaper(id);
-    reveal();
+  async function grantConfirmed(payload: unknown) {
+    const user = readSession() ?? (await getSession());
+    if (!user?.email) return;
+    const orderToken = orderTokenFrom(payload);
+    const skus = paperSkusInOrder(payload, known);
+    if (!orderToken || skus.length === 0) {
+      if (note) note.textContent = "We could not open the PDF for this purchase.";
+      return;
+    }
+    for (const id of skus) {
+      try {
+        const saved = await claimPurchase({
+          email: user.email,
+          sku: id,
+          orderToken,
+          invoice: invoiceFrom(payload),
+          title: id === sku ? title : undefined,
+        });
+        if (id === sku) await showOwned(saved);
+      } catch (error) {
+        if (id === sku && note) {
+          note.textContent = error instanceof Error ? error.message : "We could not open the PDF for this purchase.";
+        }
+      }
+    }
   }
 
-  type SnipcartApi = {
-    events: {
-      on: (name: string, fn: (payload: unknown) => void) => void;
-    };
-  };
+  function goToSignIn() {
+    const next = encodeURIComponent(safeNextPath(window.location.pathname + window.location.search, window.location.pathname));
+    window.location.assign(`/login?next=${next}`);
+  }
+
+  async function purchase() {
+    const user = (await getSession()) ?? readSession();
+    if (!user?.email) {
+      goToSignIn();
+      return;
+    }
+    const existing = purchaseFor(user.email, sku);
+    if (existing) {
+      await showOwned(existing);
+      return;
+    }
+    const button = document.getElementById("purchase-pdf");
+    const items = snipcart()?.api?.cart?.items;
+    if (!button || !items?.add) {
+      if (note) note.textContent = "Checkout is still loading. Try again in a moment.";
+      return;
+    }
+    await items.add({
+      id: button.dataset.sku ?? sku,
+      name: button.dataset.name ?? title,
+      price: Number(button.dataset.price ?? "0"),
+      url: button.dataset.productUrl ?? window.location.href,
+      description: button.dataset.description ?? "",
+      quantity: 1,
+      maxQuantity: 1,
+    });
+  }
 
   let snipcartBound = false;
 
   function bindSnipcart() {
     if (snipcartBound) return;
-    const snipcart = (window as Window & { Snipcart?: SnipcartApi }).Snipcart;
-    if (!snipcart || snipcart.events == null) return;
-    snipcart.events.on("cart.confirmed", grantConfirmed);
+    const events = snipcart()?.events;
+    if (!events) return;
+    events.on("cart.confirmed", (payload) => {
+      void grantConfirmed(payload);
+    });
     snipcartBound = true;
   }
 
   if (key) {
+    document.getElementById("purchase-pdf")?.addEventListener("click", () => {
+      void purchase();
+    });
     document.getElementById("unlock-cta")?.addEventListener("click", () => {
-      document.querySelector<HTMLButtonElement>(`.snipcart-add-item[data-paper-sku="${sku}"]`)?.click();
+      void purchase();
     });
     document.addEventListener("snipcart.ready", bindSnipcart);
     bindSnipcart();
   }
 
-  document.addEventListener("sr-entitlements-changed", reveal);
-  reveal();
+  const returning = readSession();
+  if (returning) {
+    const existing = purchaseFor(returning.email, sku);
+    if (existing) void showOwned(existing);
+  }
 </script>
