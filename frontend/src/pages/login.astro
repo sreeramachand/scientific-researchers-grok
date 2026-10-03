@@ -1,25 +1,27 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
-import { env } from "../lib/env";
 ---
 
 <BaseLayout title="Login" description="Sign in to Scientific Researchers with email and password or Google.">
   <section class="mx-auto max-w-md px-4 py-16">
     <h1 class="font-serif text-4xl">Login</h1>
-    <p class="mt-2 text-slate-600">Use the same email you registered, or continue with Google through Neon Auth.</p>
+    <p class="mt-2 text-slate-600">Use the same email you registered, or continue with Google.</p>
     <form id="login-form" class="card mt-8 grid gap-4 p-6">
       <div class="field">
         <label for="email">Email</label>
         <input id="email" name="email" type="email" autocomplete="email" required />
       </div>
       <div class="field">
-        <label for="password">Password</label>
+        <div class="flex items-center justify-between gap-3">
+          <label for="password">Password</label>
+          <a class="text-sm font-semibold text-brand-700" href="/forgot-password">Forgot password?</a>
+        </div>
         <input id="password" name="password" type="password" autocomplete="current-password" required minlength="8" />
       </div>
       <button class="btn btn-primary" type="submit">Login</button>
       <button id="google-btn" class="btn btn-secondary" type="button">Continue with Google</button>
+      <p id="auth-status" class="text-sm text-slate-600" role="status"></p>
       <p id="auth-error" class="text-sm text-red-600" role="alert"></p>
-      {!env.neonAuthUrl && <p class="text-xs text-slate-500">Neon Auth is not configured. This demo signs you in locally so Account and Dashboard can be reviewed.</p>}
       <p class="text-sm text-slate-600">Need an account? <a class="font-semibold text-brand-700" href="/signup">Sign Up</a></p>
     </form>
   </section>
@@ -31,6 +33,10 @@ import { env } from "../lib/env";
   const params = new URLSearchParams(window.location.search);
   const next = params.get("next") || "/dashboard";
   const error = document.getElementById("auth-error");
+  const status = document.getElementById("auth-status");
+  if (params.get("reset") === "1" && status) {
+    status.textContent = "Password updated. Sign in with your new password.";
+  }
 
   void getSession().then((user) => {
     if (user) window.location.replace(next);

@@ -15,7 +15,7 @@ export const projectGroups: NavGroup[] = [
     href: "/projects/biomedical-ai",
     items: [
       { label: "Nilearn image paper", href: "/projects/biomedical-ai/nilearn-image-paper" },
-      { label: "GBM signatures", href: "/projects/biomedical-ai/gbm-signatures" },
+      { label: "GBM co-expression networks", href: "/projects/biomedical-ai/gbm-signatures" },
     ],
   },
   {

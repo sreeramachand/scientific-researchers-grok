@@ -12,7 +12,7 @@ class Paper(models.Model):
     title = models.CharField(max_length=200)
     subtitle = models.CharField(max_length=240, blank=True)
     authors = models.CharField(max_length=300)
-    year = models.PositiveIntegerField()
+    year = models.PositiveIntegerField(blank=True, null=True)
     doi = models.CharField(max_length=80, blank=True)
     sku = models.CharField(max_length=80, unique=True)
     price = models.DecimalField(max_digits=8, decimal_places=2)

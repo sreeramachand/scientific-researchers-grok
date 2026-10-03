@@ -1,3 +1,15 @@
+import {
+  findLocalAccount,
+  GoogleOnlyAccountError,
+  isGoogleOnly,
+  isGoogleOnlyAccountError,
+  messageLooksLikeGoogleOnly,
+  requestLocalPasswordReset,
+  resetLocalPassword,
+  saveLocalAccount,
+  updateLocalPassword,
+} from "./local-auth";
+
 export type AuthUser = {
   id: string;
   name: string;
@@ -6,6 +18,8 @@ export type AuthUser = {
   image?: string;
   provider: "demo" | "email" | "google";
 };
+
+export { GoogleOnlyAccountError, isGoogleOnlyAccountError };
 
 const STORAGE_KEY = "sr.auth.session";
 const EVENT = "sr-auth-changed";
@@ -56,15 +70,18 @@ async function neonJson(path: string, init?: RequestInit) {
     },
     ...init,
   });
-  const data = await response.json().catch(() => ({}));
+  const data = (await response.json().catch(() => ({}))) as {
+    message?: string;
+    error?: string;
+    code?: string;
+  };
   if (!response.ok) {
-    const message =
-      (data as { message?: string }).message ??
-      (data as { error?: string }).error ??
-      "Authentication request failed.";
-    throw new Error(message);
+    const message = data.message ?? data.error ?? "Authentication request failed.";
+    const error = new Error(message) as Error & { code?: string };
+    error.code = data.code;
+    throw error;
   }
-  return data;
+  return data as Record<string, unknown>;
 }
 
 function mapNeonUser(payload: Record<string, unknown>): AuthUser {
@@ -81,13 +98,36 @@ function mapNeonUser(payload: Record<string, unknown>): AuthUser {
   };
 }
 
+async function providerIds(): Promise<string[]> {
+  const data = await neonJson("/list-accounts", { method: "GET" });
+  const rows = Array.isArray(data)
+    ? data
+    : Array.isArray((data as { accounts?: unknown }).accounts)
+      ? ((data as { accounts: unknown[] }).accounts)
+      : [];
+  return rows.map((row) => String((row as { providerId?: string }).providerId ?? ""));
+}
+
+async function withProviders(user: AuthUser): Promise<AuthUser> {
+  try {
+    const ids = await providerIds();
+    const google = ids.includes("google");
+    const email = ids.includes("credential");
+    if (google && !email) user.provider = "google";
+    else if (email) user.provider = "email";
+  } catch {
+    /* session user stands if linked accounts cannot be listed */
+  }
+  return user;
+}
+
 export async function getSession(): Promise<AuthUser | null> {
   if (neonUrl()) {
     try {
       const data = (await neonJson("/get-session", { method: "GET" })) as Record<string, unknown>;
-      if (!data || data.session == null && data.user == null) return null;
+      if (!data || (data.session == null && data.user == null)) return null;
       const session = (data.session ?? data) as Record<string, unknown>;
-      const user = mapNeonUser((session.user as Record<string, unknown>) ?? session);
+      const user = await withProviders(mapNeonUser((session.user as Record<string, unknown>) ?? session));
       writeSession(user);
       return user;
     } catch {
@@ -95,6 +135,23 @@ export async function getSession(): Promise<AuthUser | null> {
     }
   }
   return readSession();
+}
+
+export async function canChangePassword(): Promise<boolean> {
+  const session = readSession();
+  if (!session) return false;
+  if (neonUrl()) {
+    try {
+      const ids = await providerIds();
+      if (ids.includes("credential")) return true;
+      if (ids.includes("google")) return false;
+    } catch {
+      /* fall through to the stored session */
+    }
+  }
+  const account = findLocalAccount(session.email);
+  if (account && isGoogleOnly(account)) return false;
+  return session.provider !== "google";
 }
 
 export async function signUp(input: {
@@ -121,12 +178,24 @@ export async function signUp(input: {
   if (input.password.length < 8) {
     throw new Error("Use at least 8 characters.");
   }
-  const user: AuthUser = {
-    id: crypto.randomUUID(),
+  const existing = findLocalAccount(input.email);
+  if (existing && isGoogleOnly(existing)) {
+    throw new GoogleOnlyAccountError("This email uses Google sign-in. Continue with Google.");
+  }
+  const account = saveLocalAccount({
+    id: existing?.id ?? crypto.randomUUID(),
     name: input.name,
     username: input.username,
     email: input.email,
-    provider: "demo",
+    password: input.password,
+    providers: ["email"],
+  });
+  const user: AuthUser = {
+    id: account.id,
+    name: account.name,
+    username: account.username,
+    email: account.email,
+    provider: "email",
   };
   writeSession(user);
   return user;
@@ -142,12 +211,32 @@ export async function signIn(input: { email: string; password: string }): Promis
         callbackURL: `${window.location.origin}/dashboard`,
       }),
     })) as Record<string, unknown>;
-    const user = mapNeonUser(data);
+    const user = await withProviders(mapNeonUser(data));
     writeSession(user);
     return user;
   }
+  const account = findLocalAccount(input.email);
+  if (account) {
+    if (isGoogleOnly(account)) {
+      throw new GoogleOnlyAccountError("This account uses Google sign-in. Continue with Google.");
+    }
+    if (account.password && account.password !== input.password) {
+      throw new Error("The email or password is incorrect.");
+    }
+    if (account.password) {
+      const user: AuthUser = {
+        id: account.id,
+        name: account.name,
+        username: account.username,
+        email: account.email,
+        provider: "email",
+      };
+      writeSession(user);
+      return user;
+    }
+  }
   const existing = readSession();
-  if (existing && existing.email === input.email) return existing;
+  if (existing && existing.email.toLowerCase() === input.email.trim().toLowerCase()) return existing;
   if (input.password.length < 8) {
     throw new Error("Use at least 8 characters, or create an account first.");
   }
@@ -190,11 +279,18 @@ export async function signInWithGoogle(): Promise<string | null> {
     });
     return googleRedirectUrl(data);
   }
-  const user: AuthUser = {
+  const account = saveLocalAccount({
     id: "demo-google",
     name: "Alex Rivera",
     username: "alex.rivera",
     email: "alex.rivera@gmail.com",
+    providers: ["google"],
+  });
+  const user: AuthUser = {
+    id: account.id,
+    name: account.name,
+    username: account.username,
+    email: account.email,
     provider: "google",
   };
   writeSession(user);
@@ -212,19 +308,74 @@ export async function signOut(): Promise<void> {
   writeSession(null);
 }
 
+export async function requestPasswordReset(email: string): Promise<void> {
+  if (!email.includes("@")) throw new Error("Enter a valid email address.");
+  if (neonUrl()) {
+    try {
+      await neonJson("/request-password-reset", {
+        method: "POST",
+        body: JSON.stringify({
+          email,
+          redirectTo: `${window.location.origin}/reset-password`,
+        }),
+      });
+    } catch (error) {
+      const coded = error as Error & { code?: string };
+      const detail = `${coded.message ?? ""} ${coded.code ?? ""}`;
+      if (messageLooksLikeGoogleOnly(detail)) {
+        throw new GoogleOnlyAccountError(
+          "This account uses Google sign-in. Continue with Google. There is no password to reset.",
+        );
+      }
+      throw error;
+    }
+    return;
+  }
+  requestLocalPasswordReset(email);
+}
+
+export async function resetPasswordWithToken(input: { token: string; newPassword: string }): Promise<void> {
+  if (input.newPassword.length < 8) throw new Error("Use at least 8 characters.");
+  if (!input.token) throw new Error("This reset link is invalid or has expired.");
+  if (neonUrl()) {
+    try {
+      await neonJson("/reset-password", {
+        method: "POST",
+        body: JSON.stringify({
+          newPassword: input.newPassword,
+          token: input.token,
+        }),
+      });
+    } catch (error) {
+      const coded = error as Error & { code?: string };
+      if (coded.code === "INVALID_TOKEN" || /invalid token/i.test(coded.message)) {
+        throw new Error("This reset link is invalid or has expired.");
+      }
+      throw error;
+    }
+    return;
+  }
+  resetLocalPassword(input.token, input.newPassword);
+}
+
 export async function changePassword(input: {
   currentPassword: string;
   newPassword: string;
 }): Promise<void> {
   if (input.newPassword.length < 8) throw new Error("New password must be at least 8 characters.");
   if (neonUrl()) {
+    if (!(await canChangePassword())) {
+      throw new GoogleOnlyAccountError("This account uses Google sign-in, so it has no password to change.");
+    }
     await neonJson("/change-password", {
       method: "POST",
       body: JSON.stringify(input),
     });
     return;
   }
-  if (!readSession()) throw new Error("Sign in to change your password.");
+  const session = readSession();
+  if (!session) throw new Error("Sign in to change your password.");
+  updateLocalPassword(session.email, input.currentPassword, input.newPassword);
 }
 
 export async function changeEmail(email: string): Promise<AuthUser> {
@@ -237,6 +388,8 @@ export async function changeEmail(email: string): Promise<AuthUser> {
   }
   const current = readSession();
   if (!current) throw new Error("Sign in to change your email.");
+  const account = findLocalAccount(current.email);
+  if (account) saveLocalAccount({ ...account, email });
   const next = { ...current, email };
   writeSession(next);
   return next;
@@ -256,6 +409,8 @@ export async function updateProfile(input: { name: string; username: string }): 
   }
   const current = readSession();
   if (!current) throw new Error("Sign in to update your profile.");
+  const account = findLocalAccount(current.email);
+  if (account) saveLocalAccount({ ...account, name: input.name, username: input.username });
   const next = { ...current, ...input };
   writeSession(next);
   return next;

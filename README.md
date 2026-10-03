@@ -14,7 +14,7 @@ This is a two-folder monorepo.
 - Project papers: free abstract + locked PDF until purchase or an active subscription
 - Contact form through Web3Forms
 - Donate through Buy Me A Coffee
-- Auth UI for Google and email/password, wired to Neon Auth when `PUBLIC_NEON_AUTH_URL` is set, with a local demo session otherwise
+- Auth UI for Google and email/password, wired to Neon Auth when `PUBLIC_NEON_AUTH_URL` is set, including forgot-password for email accounts. Google-only accounts stay on Google sign-in.
 - Account page: username, password, change password, change email, billing, subscriptions
 - Dashboard: Active Awards, Projects, Submissions, Completed Publications, Webinar links, Poster presentation links
 
@@ -36,7 +36,7 @@ cp .env.example frontend/.env
 | Variable | Used by | Purpose |
 | --- | --- | --- |
 | `PUBLIC_WEB3FORMS_ACCESS_KEY` | Frontend | Contact form (`https://api.web3forms.com/submit`) |
-| `PUBLIC_SNIPCART_API_KEY` | Frontend | Paywall checkout and subscriptions |
+| `PUBLIC_SNIPCART_API_KEY` | Frontend | Public Snipcart key, inlined at build time, for project-PDF checkout only |
 | `PUBLIC_BUYMEACOFFEE_URL` | Frontend | Donate buttons |
 | `PUBLIC_NEON_AUTH_URL` | Frontend | Neon Managed Better Auth base URL |
 | `PUBLIC_API_URL` | Frontend | Django API origin |
@@ -46,10 +46,13 @@ cp .env.example frontend/.env
 | `DATABASE_URL` | Django | Neon Postgres. Empty → SQLite at `backend/db.sqlite3` |
 | `DJANGO_SECRET_KEY` | Django | Required in production |
 | `CORS_ALLOWED_ORIGINS` | Django | Frontend origins allowed to call the API |
+| `SNIPCART_API_KEY` | Django | Snipcart **secret** API key for `POST /api/entitlements/snipcart/webhook/`. Not the public key, and not stored in this repository. |
 
 Google OAuth redirect URI in Google Cloud must be `{NEON_AUTH_BASE_URL}/callback/google`, not the Astro site origin. Add the Astro origin to Neon Auth trusted domains.
 
-When keys are missing, the UI still works: contact stores a local confirmation, checkout grants a browser entitlement, and auth uses `localStorage`.
+Email password reset calls Neon Auth `POST /request-password-reset` and `POST /reset-password`. The reset link returns to `/reset-password`. Google-only accounts are sent back to Google sign-in instead of an email reset.
+
+A completed Snipcart checkout for a project PDF unlocks that file in the browser using `PUBLIC_SNIPCART_API_KEY`. Recording the order on the server requires `SNIPCART_API_KEY` in the server environment. Until that secret is set, the webhook responds with HTTP 503 and does not grant an entitlement. Do not commit the secret.
 
 ## Run the frontend
 
@@ -89,10 +92,11 @@ API routes:
 - `GET /api/entitlements/`
 - `GET /api/entitlements/access/?sku=`
 - `GET /api/entitlements/subscription/`
+- `POST /api/entitlements/snipcart/webhook/` (Snipcart `order.completed`; requires `SNIPCART_API_KEY`)
 
 ## Upload paper PDFs
 
-Place production PDFs in `frontend/public/papers/` using the file names in `frontend/public/papers/README.md`. Placeholder PDFs ship so the paywall preview has something to open after unlock.
+Place production PDFs in `frontend/public/papers/` using the file names in `frontend/public/papers/README.md`. The glioblastoma manuscript is `gene-co-expression-networks-in-glioblastoma-multiforme.pdf`. Its on-site preview is the one-page file under `frontend/public/papers/previews/`.
 
 ## Deploy (single VPS)
 

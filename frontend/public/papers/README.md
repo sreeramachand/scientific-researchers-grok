@@ -1,16 +1,13 @@
 # Project paper PDFs
 
-Upload the typeset PDF for each paywalled project paper here. The site serves files from this folder and keeps them behind the Snipcart / subscription lock on the paper page.
-
-| Paper | File name |
+| Paper | File |
 | --- | --- |
 | Nilearn image paper | `nilearn-image-paper.pdf` |
-| GBM signatures | `gbm-signatures.pdf` |
+| Gene co-expression networks in glioblastoma multiforme | `gene-co-expression-networks-in-glioblastoma-multiforme.pdf` |
+| First page of the glioblastoma paper | `previews/gene-co-expression-networks-in-glioblastoma-multiforme-page-1.pdf` |
 | Uveal melanoma | `uveal-melanoma.pdf` |
 | Diabetic retinopathy | `diabetic-retinopathy.pdf` |
 | Lung paper | `lung-paper.pdf` |
 | Colon cancer paper | `colon-cancer-paper.pdf` |
 
-Replace the placeholder PDFs with the production files. Do not commit confidential manuscripts or files that contain patient identifiers.
-
-The frontend preview path is `/papers/<file-name>.pdf`. Django stores the same file name on each `Paper.pdf_filename` row.
+The glioblastoma preview file is the first page only. The full manuscript is the file beside it.

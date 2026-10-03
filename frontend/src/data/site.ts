@@ -5,8 +5,6 @@ export const site = {
     "Scientific Researchers is a publication and research company. We publish computational and clinical papers, host community STEAM programs, run professional development, and administer research awards.",
   url: "https://scientificresearchers.org",
   email: "hello@scientificresearchers.org",
-  demoAuthNotice:
-    "Neon Auth keys are not configured. This local demo stores a session in your browser only.",
 };
 
 export const pricing = [
@@ -25,7 +23,6 @@ export const pricing = [
     cta: "Browse open research",
     href: "/community",
     highlighted: false,
-    snipcart: false,
   },
   {
     id: "paper",
@@ -36,13 +33,12 @@ export const pricing = [
     features: [
       "Full PDF for one project paper",
       "Figures, tables, and supplements",
-      "Receipt in Snipcart / your account",
+      "Receipt kept with your account",
       "No subscription required",
     ],
     cta: "Choose a paper",
     href: "/projects",
     highlighted: false,
-    snipcart: false,
   },
   {
     id: "researcher",
@@ -56,12 +52,9 @@ export const pricing = [
       "Webinar archive links",
       "Cancel anytime",
     ],
-    cta: "Subscribe monthly",
-    href: "#",
+    cta: "Request monthly plan",
+    href: "/contact",
     highlighted: true,
-    snipcart: true,
-    sku: "sub-researcher-monthly",
-    interval: "Month",
   },
   {
     id: "lab",
@@ -75,12 +68,9 @@ export const pricing = [
       "Priority poster and webinar notices",
       "Annual invoice-friendly receipt",
     ],
-    cta: "Subscribe annually",
-    href: "#",
+    cta: "Request annual plan",
+    href: "/contact",
     highlighted: false,
-    snipcart: true,
-    sku: "sub-lab-annual",
-    interval: "Year",
   },
 ] as const;
 
@@ -100,7 +90,7 @@ export const dashboardDemo = {
     },
   ],
   projects: [
-    { title: "GBM signatures", role: "Corresponding author", status: "Published" },
+    { title: "Gene co-expression networks in glioblastoma", role: "Corresponding author", status: "Published" },
     { title: "Diabetic retinopathy screening models", role: "Collaborator", status: "In revision" },
   ],
   submissions: [

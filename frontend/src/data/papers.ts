@@ -7,7 +7,7 @@ export type Paper = {
   title: string;
   subtitle: string;
   authors: string;
-  year: number;
+  year: number | null;
   doi: string;
   sku: string;
   price: number;
@@ -15,6 +15,8 @@ export type Paper = {
   highlights: string[];
   methods: string;
   pdfPath: string;
+  /** Public single-page preview. Omit when the paper has no first-page file. */
+  previewPath?: string;
 };
 
 export const categoryMeta: Record<
@@ -25,7 +27,7 @@ export const categoryMeta: Record<
     label: "Biomedical AI",
     href: "/projects/biomedical-ai",
     description:
-      "Computational imaging, neuroimaging toolkits, and molecular signature models that turn high-dimensional biomedical data into reproducible findings.",
+      "Computational imaging, neuroimaging toolkits, and gene co-expression networks that turn high-dimensional biomedical data into reproducible findings.",
   },
   visual: {
     label: "Visual",
@@ -68,23 +70,25 @@ export const papers: Paper[] = [
     slug: "gbm-signatures",
     category: "biomedical-ai",
     categoryLabel: "Biomedical AI",
-    title: "Glioblastoma transcriptional signatures",
-    subtitle: "Multi-omic classifiers for GBM subtype and treatment context",
-    authors: "S. Rahman, L. Petrova, J. Walsh, Scientific Researchers Oncology Lab",
-    year: 2025,
-    doi: "10.0000/sr.gbm.2025",
+    title: "Biomedical Oncology Application of Gene Co-expression Networks in Glioblastoma Multiforme",
+    subtitle: "Four graph-theoretic signatures that separate glioblastoma networks from normal brain",
+    authors: "Adityakrishna SreeRamachandrarao, Anusha Lakshmi Dharmavathi, and Satyavathi Dronamraju",
+    year: null,
+    doi: "",
     sku: "paper-gbm-signatures",
     price: 29,
     abstract:
-      "This study derives compact glioblastoma signatures from RNA-seq and methylation arrays, then tests whether those signatures remain predictive after standard chemoradiation. We report a 24-gene panel that stratifies survival independently of MGMT and a spatial transcriptomics overlay that localizes the signature to infiltrative margins.",
+      "This paper treats glioblastoma as a network-level disorder rather than a short list of mutations. Genes are nodes, and co-expression links that remain significant after Benjamini–Hochberg correction are edges. Comparing glioblastoma multiforme with normal brain, four signatures separate the networks: degree distribution and power-law exponent, clique cover and Ramsey substructure, k-core decomposition, and the signed Laplacian spectrum. The cancer network has heavier hub tails and a lower power-law exponent, a higher clique cover with denser overlapping communities, deeper nested cores beside a fragmented periphery, and a broader spectrum with negative eigenvalues and lower algebraic connectivity.",
     highlights: [
-      "24-gene GBM panel independent of MGMT status",
-      "Cross-validated on TCGA and an institutional hold-out",
-      "Spatial overlay at infiltrative tumor margins",
+      "Degree distribution and power-law exponent: heavier tails and a lower exponent in glioblastoma, with more dominant hubs than in normal brain",
+      "Clique cover and Ramsey substructure: higher clique cover, with larger and denser overlapping communities in the cancer network",
+      "k-core decomposition: higher maximum coreness and a deeper nested core in glioblastoma, alongside a more fragmented periphery",
+      "Signed Laplacian spectrum: a broader cancer spectrum, negative eigenvalues that are absent in normal brain, and lower algebraic connectivity",
     ],
     methods:
-      "Bulk RNA-seq was batch-corrected and filtered to protein-coding genes. Elastic-net Cox models were nested inside 5-fold cross-validation. Methylation probes were reduced with supervised PCA. Spatial validation used Visium spots mapped to histologic regions.",
-    pdfPath: "/papers/gbm-signatures.pdf",
+      "Public glioblastoma and normal brain expression sets were filtered, log-transformed, and aligned to a shared gene set. Pairwise Pearson correlations became weighted, signed edges only when p < 0.05 after Benjamini–Hochberg correction. The networks were built in Python with NetworkX. Power-law fits used maximum likelihood and a bootstrap goodness-of-fit check; clique size, coreness, and algebraic connectivity were compared with Mann–Whitney U tests. Glioblastoma differed from normal brain on every signature tested.",
+    pdfPath: "/papers/gene-co-expression-networks-in-glioblastoma-multiforme.pdf",
+    previewPath: "/papers/previews/gene-co-expression-networks-in-glioblastoma-multiforme-page-1.pdf",
   },
   {
     slug: "uveal-melanoma",

@@ -2,7 +2,6 @@
 import "../styles/global.css";
 import Header from "../components/Header.astro";
 import Footer from "../components/Footer.astro";
-import CommerceScript from "../components/CommerceScript.astro";
 import { site } from "../data/site";
 import { env } from "../lib/env";
 
@@ -10,13 +9,17 @@ type Props = {
   title?: string;
   description?: string;
   image?: string;
+  includeSnipcart?: boolean;
 };
 
 const {
   title = site.name,
   description = site.description,
   image = "/logo.png",
+  includeSnipcart = false,
 } = Astro.props;
+
+const loadSnipcart = includeSnipcart && Boolean(env.snipcartKey);
 
 const pageTitle = title === site.name ? title : `${title} · ${site.name}`;
 const canonical = new URL(Astro.url.pathname, Astro.site ?? site.url).toString();
@@ -44,7 +47,7 @@ const canonical = new URL(Astro.url.pathname, Astro.site ?? site.url).toString()
       href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Source+Serif+4:opsz,wght@8..60,500;8..60,650;8..60,700&display=swap"
       rel="stylesheet"
     />
-    {env.snipcartKey && (
+    {loadSnipcart && (
       <link rel="preconnect" href="https://app.snipcart.com" />
       <link rel="preconnect" href="https://cdn.snipcart.com" />
       <link rel="stylesheet" href="https://cdn.snipcart.com/themes/v3.2.2/default/snipcart.css" />
@@ -57,8 +60,7 @@ const canonical = new URL(Astro.url.pathname, Astro.site ?? site.url).toString()
       <slot />
     </main>
     <Footer />
-    <CommerceScript />
-    {env.snipcartKey ? (
+    {loadSnipcart ? (
       <>
         <div hidden id="snipcart" data-api-key={env.snipcartKey} data-config-modal-style="side"></div>
         <script is:inline src="https://cdn.snipcart.com/themes/v3.2.2/default/snipcart.js"></script>

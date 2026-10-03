@@ -84,7 +84,7 @@ Edit `/etc/scientific-researchers/env` (mode `0640`, group `sr`). Start from `in
 | `CSRF_TRUSTED_ORIGINS` | Recommended | `https://scientificresearchers.org` |
 | `BEHIND_PROXY` | **Yes** | `true` so Django trusts `X-Forwarded-Proto` from Caddy |
 | `NEON_AUTH_BASE_URL` | If using Neon Auth | Same Auth URL as the frontend |
-| `SNIPCART_API_KEY` | If verifying server-side | Secret key, not the public one |
+| `SNIPCART_API_KEY` | To verify paid PDF orders | Snipcart **secret** API key, not `PUBLIC_SNIPCART_API_KEY`. Set it only in this server env file. Do not commit it. Until it is set, `POST /api/entitlements/snipcart/webhook/` refuses unverified orders. Browser checkout still uses the public key. |
 
 Caddy-only values in `/etc/scientific-researchers/caddy.env`:
 
@@ -171,7 +171,7 @@ No AWS keys, OIDC role, or `AWS_ROLE_ARN` are used.
 
 Optional first-time data: `sudo -u sr /opt/scientific-researchers/shared/venv/bin/python /opt/scientific-researchers/current/backend/manage.py seed_papers`
 
-Configure Snipcart allowed domains, Web3Forms, Buy Me A Coffee, and Neon Auth trusted domains to `https://scientificresearchers.org`. Google OAuth redirect stays `{NEON_AUTH_BASE_URL}/callback/google`.
+Configure Snipcart allowed domains, Web3Forms, Buy Me A Coffee, and Neon Auth trusted domains to `https://scientificresearchers.org`. Point the Snipcart webhook at `https://scientificresearchers.org/api/entitlements/snipcart/webhook/`. Google OAuth redirect stays `{NEON_AUTH_BASE_URL}/callback/google`.
 
 ## 7. CI vs deploy
 

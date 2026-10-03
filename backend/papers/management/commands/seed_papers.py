@@ -19,15 +19,20 @@ PAPERS = [
     {
         "slug": "gbm-signatures",
         "category": Paper.Category.BIOMEDICAL_AI,
-        "title": "Glioblastoma transcriptional signatures",
-        "subtitle": "Multi-omic classifiers for GBM subtype and treatment context",
-        "authors": "S. Rahman, L. Petrova, J. Walsh, Scientific Researchers Oncology Lab",
-        "year": 2025,
-        "doi": "10.0000/sr.gbm.2025",
+        "title": "Biomedical Oncology Application of Gene Co-expression Networks in Glioblastoma Multiforme",
+        "subtitle": "Four graph-theoretic signatures that separate glioblastoma networks from normal brain",
+        "authors": "Adityakrishna SreeRamachandrarao, Anusha Lakshmi Dharmavathi, and Satyavathi Dronamraju",
+        "year": None,
+        "doi": "",
         "sku": "paper-gbm-signatures",
         "price": "29.00",
-        "abstract": "This study derives compact glioblastoma signatures from RNA-seq and methylation arrays.",
-        "pdf_filename": "gbm-signatures.pdf",
+        "abstract": (
+            "Genes are nodes and significant co-expression links are edges. "
+            "Four graph-theoretic signatures separate glioblastoma from normal brain: "
+            "degree distribution and power-law exponent, clique cover and Ramsey substructure, "
+            "k-core decomposition, and the signed Laplacian spectrum."
+        ),
+        "pdf_filename": "gene-co-expression-networks-in-glioblastoma-multiforme.pdf",
     },
     {
         "slug": "uveal-melanoma",
