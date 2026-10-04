@@ -18,5 +18,6 @@ class PaperSerializer(serializers.ModelSerializer):
             "sku",
             "price",
             "abstract",
+            "keywords",
             "is_published",
         ]

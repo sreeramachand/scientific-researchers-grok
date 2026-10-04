@@ -86,16 +86,11 @@ export const professionalPages: ProgramPage[] = [
     slug: "poster-presentations",
     title: "Poster Presentations",
     kicker: "Professional Development",
-    lede: "Templates, review clinics, and an archive of posters from our meetings and award cycles.",
+    lede: "Conferences that accept bioinformatics posters, with links to each meeting’s own page.",
     sections: [
       {
-        title: "How to deposit a poster",
-        body: "Accepted presenters receive a deposit link from the dashboard. Posters remain open. Linked project papers stay behind the paywall unless the visitor already purchased them.",
-        items: [
-          "Nilearn multi-site maps",
-          "Referable diabetic retinopathy operating points",
-          "Colon pathology-only classifier",
-        ],
+        title: "Where to present",
+        body: "The meetings below are active, hold poster sessions at least once a year, and accept bioinformatics papers. They span the United States, Europe, and Asia. This site does not host those posters.",
       },
     ],
   },
@@ -103,18 +98,8 @@ export const professionalPages: ProgramPage[] = [
     slug: "webinars",
     title: "Webinars",
     kicker: "Professional Development",
-    lede: "Live sessions and a public archive. Registration is free. Recordings stay on this page.",
-    sections: [
-      {
-        title: "On the calendar",
-        body: "Upcoming webinars appear in member dashboards and here. Topics rotate through methods, visual science, cancer, and awards briefings.",
-        items: [
-          "8 Oct 2026 — Reporting checklists for biomedical AI",
-          "19 Nov 2026 — Poster clinic: figures that survive review",
-          "14 Jan 2027 — Awards cycle briefing",
-        ],
-      },
-    ],
+    lede: "Three Friday information sessions, 7:00–8:00 PM ET. A message of interest is required before the meeting link is shown.",
+    sections: [],
   },
   {
     slug: "publications",

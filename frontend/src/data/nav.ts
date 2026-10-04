@@ -1,3 +1,5 @@
+import { categoryMeta, papers, type PaperCategory } from "./papers";
+
 export type NavLink = {
   label: string;
   href: string;
@@ -9,32 +11,22 @@ export type NavGroup = {
   items: NavLink[];
 };
 
-export const projectGroups: NavGroup[] = [
-  {
-    label: "Biomedical AI",
-    href: "/projects/biomedical-ai",
-    items: [
-      { label: "Nilearn image paper", href: "/projects/biomedical-ai/nilearn-image-paper" },
-      { label: "GBM co-expression networks", href: "/projects/biomedical-ai/gbm-signatures" },
-    ],
-  },
-  {
-    label: "Visual",
-    href: "/projects/visual",
-    items: [
-      { label: "Uveal melanoma", href: "/projects/visual/uveal-melanoma" },
-      { label: "Diabetic retinopathy", href: "/projects/visual/diabetic-retinopathy" },
-    ],
-  },
-  {
-    label: "Cancer",
-    href: "/projects/cancer",
-    items: [
-      { label: "Lung paper", href: "/projects/cancer/lung-paper" },
-      { label: "Colon cancer paper", href: "/projects/cancer/colon-cancer-paper" },
-    ],
-  },
-];
+const categoryOrder: PaperCategory[] = ["biomedical-ai", "visual", "cancer"];
+
+export const projectGroups: NavGroup[] = categoryOrder
+  .map((category) => {
+    const meta = categoryMeta[category];
+    const items = papers
+      .filter((paper) => paper.category === category && paper.published !== false)
+      .map((paper) => ({
+        label: paper.navLabel,
+        href: `/projects/${paper.category}/${paper.slug}`,
+      }));
+    return { label: meta.label, href: meta.href, items };
+  })
+  .filter((group) => group.items.length > 0);
+
+export const projectsMore: NavLink = { label: "More", href: "/projects" };
 
 export const communityLinks: NavLink[] = [
   { label: "AI/STEAM", href: "/community/ai-steam" },
@@ -49,13 +41,7 @@ export const professionalLinks: NavLink[] = [
   { label: "Publications", href: "/professional-development/publications" },
 ];
 
-export const awardAnchors: NavLink[] = [
-  { label: "Nomination Process", href: "/awards#nomination-process" },
-  { label: "Eligibility", href: "/awards#eligibility" },
-  { label: "Award Categories", href: "/awards#award-categories" },
-  { label: "Subject Domains", href: "/awards#subject-domains" },
-  { label: "FAQ", href: "/awards#faq" },
-];
+export const awardAnchors: NavLink[] = [{ label: "Awards", href: "/awards" }];
 
 export const profileLinks: NavLink[] = [
   { label: "Account", href: "/account" },

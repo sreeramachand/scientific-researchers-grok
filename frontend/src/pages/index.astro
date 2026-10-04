@@ -1,6 +1,7 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
 import PricingCards from "../components/PricingCards.astro";
+import { awards } from "../data/awards";
 import { categoryMeta, papers } from "../data/papers";
 import { site } from "../data/site";
 ---
@@ -28,7 +29,7 @@ import { site } from "../data/site";
         <dl class="mt-6 grid grid-cols-3 gap-3 text-center">
           <div><dt class="text-xs uppercase tracking-wide text-slate-500">Project papers</dt><dd class="font-serif text-3xl">{papers.length}</dd></div>
           <div><dt class="text-xs uppercase tracking-wide text-slate-500">Open programs</dt><dd class="font-serif text-3xl">3</dd></div>
-          <div><dt class="text-xs uppercase tracking-wide text-slate-500">Award cycle</dt><dd class="font-serif text-3xl">2026</dd></div>
+          <div><dt class="text-xs uppercase tracking-wide text-slate-500">Awards announced</dt><dd class="font-serif text-3xl">{awards.length}</dd></div>
         </dl>
       </div>
     </div>
@@ -55,7 +56,7 @@ import { site } from "../data/site";
       </a>
       <a href="/awards" class="card block p-6">
         <p class="text-sm font-bold text-brand-700">Awards</p>
-        <p class="mt-3 text-sm leading-6 text-slate-600">One awards program with a public nomination process, eligibility, categories, domains, and FAQ.</p>
+        <p class="mt-3 text-sm leading-6 text-slate-600">Awards are listed only after one is announced. The page stays empty until then.</p>
       </a>
     </div>
   </section>

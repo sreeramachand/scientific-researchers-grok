@@ -87,7 +87,12 @@ Health check: `http://127.0.0.1:8007/api/health/`
 
 API routes:
 
-- `GET /api/papers/` and `GET /api/papers/<slug>/`
+- `GET /api/papers/?q=` and `GET /api/papers/<slug>/` — published papers only. `q` matches title, authors, abstract, or keywords.
+- `GET /api/webinars/sessions/` — information-session dates and times. Meet links are not included.
+- `POST /api/webinars/rsvp/` — name, email, and a required message of interest. The response includes that session’s Meet link. The RSVP is saved even when email is not configured.
+- `GET /api/webinars/rsvps/` — reviewer accounts only (`asreera110@gmail.com`, `asreera110@scientificml.net`), with a verified Neon Auth JWT.
+- `GET|POST /api/submissions/` — private LaTeX PDFs for the signed-in submitter and those reviewer accounts. They are not papers and not projects.
+- `GET /api/submissions/<id>/file/` — that same audience. The file is not a public static URL.
 - `GET|PATCH /api/profile/me/` (authenticated)
 - `GET /api/entitlements/`
 - `GET /api/entitlements/access/?sku=`
@@ -95,6 +100,8 @@ API routes:
 - `POST /api/entitlements/purchases/` (signed-in checkout confirmation; returns a download token)
 - `GET /api/entitlements/papers/<sku>/file/?access=` (full PDF for that purchase only)
 - `POST /api/entitlements/snipcart/webhook/` (Snipcart `order.completed`; requires `SNIPCART_API_KEY`)
+
+Notices to `asreera110@scientificml.net` are sent only when the server already has `EMAIL_HOST`. Otherwise the RSVP or submission is still saved, and `notification_sent` is false with `notification_error` set. Do not commit SMTP credentials.
 
 ## Paper PDFs
 

@@ -25,7 +25,24 @@ export type AuthUser = {
 export { GoogleOnlyAccountError, isGoogleOnlyAccountError };
 
 const STORAGE_KEY = "sr.auth.session";
+const JWT_KEY = "sr.auth.jwt";
 const EVENT = "sr-auth-changed";
+
+export function readAuthToken(): string {
+  if (typeof window === "undefined") return "";
+  return window.sessionStorage.getItem(JWT_KEY) ?? "";
+}
+
+function storeAuthToken(token: string | null) {
+  if (typeof window === "undefined") return;
+  if (token) window.sessionStorage.setItem(JWT_KEY, token);
+  else window.sessionStorage.removeItem(JWT_KEY);
+}
+
+function rememberJwt(response: Response) {
+  const jwt = response.headers.get("set-auth-jwt")?.trim();
+  if (jwt) storeAuthToken(jwt);
+}
 
 /** Bumped on every local session write so an older get-session cannot overwrite it. */
 let sessionEpoch = 0;
@@ -62,7 +79,10 @@ export function writeSession(user: AuthUser | null) {
   if (prev === next) return;
   sessionEpoch += 1;
   if (next) window.localStorage.setItem(STORAGE_KEY, next);
-  else window.localStorage.removeItem(STORAGE_KEY);
+  else {
+    window.localStorage.removeItem(STORAGE_KEY);
+    storeAuthToken(null);
+  }
   emit();
 }
 
@@ -84,7 +104,12 @@ async function neonJson(path: string, init?: RequestInit) {
     message?: string;
     error?: string;
     code?: string;
+    token?: string;
   };
+  if (response.ok) {
+    rememberJwt(response);
+    if (typeof data.token === "string" && data.token.split(".").length === 3) storeAuthToken(data.token);
+  }
   if (!response.ok) {
     const message = data.message ?? data.error ?? "Authentication request failed.";
     const error = new Error(message) as Error & { code?: string };
@@ -142,12 +167,30 @@ export async function getSession(): Promise<AuthUser | null> {
       const user = await withProviders(account);
       if (epoch !== sessionEpoch) return readSession();
       writeSession(user);
+      if (!readAuthToken()) await refreshAuthToken();
       return user;
     } catch {
       return readSession();
     }
   }
   return readSession();
+}
+
+async function refreshAuthToken(): Promise<void> {
+  const base = neonUrl().replace(/\/$/, "");
+  if (!base) return;
+  try {
+    const response = await fetch(`${base}/token`, {
+      credentials: "include",
+      headers: { Accept: "application/json" },
+    });
+    if (!response.ok) return;
+    rememberJwt(response);
+    const body = (await response.json().catch(() => ({}))) as { token?: unknown };
+    if (typeof body.token === "string" && body.token.split(".").length === 3) storeAuthToken(body.token);
+  } catch {
+    /* the signed-in page still works; private lists stay hidden without a token */
+  }
 }
 
 export async function canChangePassword(): Promise<boolean> {

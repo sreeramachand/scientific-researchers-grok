@@ -1,6 +1,8 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
-import { dashboardDemo } from "../data/site";
+import { awards } from "../data/awards";
+import { posterConferences } from "../data/conferences";
+import { informationSessions } from "../lib/sessions";
 
 const panels = [
   { id: "awards", label: "Active Awards" },
@@ -37,67 +39,58 @@ const panels = [
       <div>
         <section class="dash-panel card p-6" data-panel="awards">
           <h2 class="font-serif text-2xl">Active Awards</h2>
-          <ul class="mt-4 space-y-3">
-            {dashboardDemo.awards.map((item) => (
-              <li class="rounded-xl border border-slate-200 p-4">
-                <p class="font-semibold">{item.name}</p>
-                <p class="text-sm text-slate-600">{item.status} · {item.cycle}</p>
-                <p class="text-sm text-slate-500">{item.due}</p>
-              </li>
-            ))}
-          </ul>
+          {awards.length === 0 ? (
+            <p class="mt-4 text-sm text-slate-600">No awards yet.</p>
+          ) : (
+            <ul class="mt-4 space-y-3">
+              {awards.map((item) => (
+                <li class="rounded-xl border border-slate-200 p-4">
+                  <p class="font-semibold">{item.title}</p>
+                  <p class="text-sm text-slate-600">{item.recipient} · {item.year}</p>
+                </li>
+              ))}
+            </ul>
+          )}
         </section>
         <section class="dash-panel card hidden p-6" data-panel="projects">
-          <h2 class="font-serif text-2xl">Projects</h2>
-          <ul class="mt-4 space-y-3">
-            {dashboardDemo.projects.map((item) => (
-              <li class="rounded-xl border border-slate-200 p-4">
-                <p class="font-semibold">{item.title}</p>
-                <p class="text-sm text-slate-600">{item.role} · {item.status}</p>
-              </li>
-            ))}
-          </ul>
+          <div class="flex items-start justify-between gap-4">
+            <h2 class="font-serif text-2xl">Projects</h2>
+            <a href="/projects#submit" class="grid h-11 w-11 place-items-center rounded-full bg-gradient-to-br from-cyan-500 to-brand-600 text-xl font-semibold text-white" aria-label="Submit a LaTeX PDF">+</a>
+          </div>
+          <p class="mt-4 text-sm text-slate-600">No projects are listed yet. A submitted PDF stays in Submissions until it is published.</p>
         </section>
         <section class="dash-panel card hidden p-6" data-panel="submissions">
           <h2 class="font-serif text-2xl">Submissions</h2>
-          <ul class="mt-4 space-y-3">
-            {dashboardDemo.submissions.map((item) => (
-              <li class="rounded-xl border border-slate-200 p-4">
-                <p class="font-semibold">{item.title}</p>
-                <p class="text-sm text-slate-600">{item.venue} · {item.status}</p>
-              </li>
-            ))}
-          </ul>
+          <ul id="submission-list" class="mt-4 space-y-3"></ul>
+          <p id="submission-empty" class="mt-4 text-sm text-slate-600">No submissions yet.</p>
+          <p id="submission-error" class="mt-4 hidden text-sm text-slate-600"></p>
         </section>
         <section class="dash-panel card hidden p-6" data-panel="publications">
           <h2 class="font-serif text-2xl">Completed Publications</h2>
-          <ul class="mt-4 space-y-3">
-            {dashboardDemo.publications.map((item) => (
-              <li class="rounded-xl border border-slate-200 p-4">
-                <a class="font-semibold text-brand-700" href={item.href}>{item.title}</a>
-                <p class="text-sm text-slate-600">{item.year}</p>
-              </li>
-            ))}
-          </ul>
+          <p class="mt-4 text-sm text-slate-600">Completed publications appear here after they are published to your account.</p>
         </section>
         <section class="dash-panel card hidden p-6" data-panel="webinars">
           <h2 class="font-serif text-2xl">Webinar links</h2>
           <ul class="mt-4 space-y-3">
-            {dashboardDemo.webinars.map((item) => (
+            {informationSessions.map((item) => (
               <li class="rounded-xl border border-slate-200 p-4">
-                <a class="font-semibold text-brand-700" href={item.href}>{item.title}</a>
-                <p class="text-sm text-slate-600">{item.date}</p>
+                <a class="font-semibold text-brand-700" href={`/professional-development/webinars#session-${item.id}`}>{item.label}</a>
+                <p class="text-sm text-slate-600">Information session · {item.time}</p>
               </li>
             ))}
           </ul>
+          <div id="dash-rsvps" class="mt-6 hidden">
+            <h3 class="font-semibold">Who RSVP’d</h3>
+            <ul id="dash-rsvp-list" class="mt-3 space-y-3"></ul>
+          </div>
         </section>
         <section class="dash-panel card hidden p-6" data-panel="posters">
           <h2 class="font-serif text-2xl">Poster presentation links</h2>
           <ul class="mt-4 space-y-3">
-            {dashboardDemo.posters.map((item) => (
+            {posterConferences.map((item) => (
               <li class="rounded-xl border border-slate-200 p-4">
-                <a class="font-semibold text-brand-700" href={item.href}>{item.title}</a>
-                <p class="text-sm text-slate-600">{item.event}</p>
+                <a class="font-semibold text-brand-700" href={item.href}>{item.name}</a>
+                <p class="text-sm text-slate-600">{item.region}</p>
               </li>
             ))}
           </ul>
@@ -108,8 +101,11 @@ const panels = [
 </BaseLayout>
 
 <script>
-  import { requireAuth } from "../lib/auth";
+  import { apiFetch } from "../lib/api";
+  import { getSession, requireAuth } from "../lib/auth";
   import { purchasedFileUrl, purchasesForEmail } from "../lib/purchases";
+  import { isReviewer } from "../lib/reviewers";
+  import { informationSessions } from "../lib/sessions";
 
   const user = requireAuth();
   if (!user) throw new Error("redirecting");
@@ -155,4 +151,103 @@ const panels = [
   }
 
   links.forEach((link) => link.addEventListener("click", () => show(link.dataset.target ?? "awards")));
+
+  type SubmissionRow = {
+    id: string;
+    title: string;
+    submitter_name: string;
+    submitter_email: string;
+    original_filename: string;
+    notification_sent: boolean;
+    notification_error: string;
+  };
+
+  const submissionList = document.getElementById("submission-list");
+  const submissionEmpty = document.getElementById("submission-empty");
+  const submissionError = document.getElementById("submission-error");
+
+  async function openSubmission(id: string, filename: string) {
+    const response = await apiFetch(`/api/submissions/${id}/file/`);
+    if (!response.ok) return;
+    const blob = await response.blob();
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = filename || "submission.pdf";
+    anchor.click();
+    URL.revokeObjectURL(url);
+  }
+
+  const sessionUser = (await getSession()) ?? user;
+  const submissions = await apiFetch("/api/submissions/");
+  if (!submissions.ok) {
+    if (submissionError) {
+      submissionError.textContent = "Sign in with the site account so we can confirm which submissions are yours. Nothing private is shown.";
+      submissionError.classList.remove("hidden");
+    }
+  } else {
+    const rows = (await submissions.json()) as SubmissionRow[];
+    if (rows.length && submissionEmpty) submissionEmpty.classList.add("hidden");
+    for (const row of rows) {
+      const item = document.createElement("li");
+      item.className = "rounded-xl border border-slate-200 p-4";
+      const heading = document.createElement("p");
+      heading.className = "font-semibold";
+      heading.textContent = row.title || row.original_filename;
+      const who = document.createElement("p");
+      who.className = "text-sm text-slate-600";
+      who.textContent = `${row.submitter_name} · ${row.submitter_email}`;
+      const mail = document.createElement("p");
+      mail.className = "mt-1 text-sm text-slate-500";
+      mail.textContent = row.notification_sent ? "Email notice sent." : row.notification_error || "Email notice was not sent.";
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "mt-2 text-sm font-semibold text-brand-700";
+      button.textContent = "Download PDF";
+      button.addEventListener("click", () => void openSubmission(row.id, row.original_filename));
+      item.append(heading, who, mail, button);
+      submissionList?.append(item);
+    }
+  }
+
+  if (isReviewer(sessionUser.email)) {
+    const box = document.getElementById("dash-rsvps");
+    const rsvpList = document.getElementById("dash-rsvp-list");
+    const response = await apiFetch("/api/webinars/rsvps/");
+    if (response.ok && box && rsvpList) {
+      box.classList.remove("hidden");
+      const rows = (await response.json()) as {
+        name: string;
+        email: string;
+        message: string;
+        session_id: string;
+        notification_sent: boolean;
+        notification_error: string;
+      }[];
+      if (!rows.length) {
+        const item = document.createElement("li");
+        item.className = "text-sm text-slate-600";
+        item.textContent = "No RSVPs yet.";
+        rsvpList.append(item);
+      }
+      for (const row of rows) {
+        const item = document.createElement("li");
+        item.className = "rounded-xl border border-slate-200 p-4";
+        const who = document.createElement("p");
+        who.className = "font-semibold";
+        who.textContent = `${row.name} · ${row.email}`;
+        const session = document.createElement("p");
+        session.className = "text-sm text-slate-600";
+        session.textContent = informationSessions.find((item) => item.id === row.session_id)?.label ?? row.session_id;
+        const message = document.createElement("p");
+        message.className = "mt-2 text-sm";
+        message.textContent = row.message;
+        const mail = document.createElement("p");
+        mail.className = "mt-2 text-sm text-slate-500";
+        mail.textContent = row.notification_sent ? "Email notice sent." : row.notification_error || "Email notice was not sent.";
+        item.append(who, session, message, mail);
+        rsvpList.append(item);
+      }
+    }
+  }
 </script>

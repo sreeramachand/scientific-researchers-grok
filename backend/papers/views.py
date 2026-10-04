@@ -1,17 +1,16 @@
-from rest_framework import viewsets
-from rest_framework.permissions import AllowAny, IsAuthenticatedOrReadOnly
+from rest_framework.permissions import AllowAny
+from rest_framework.viewsets import ReadOnlyModelViewSet
 
 from .models import Paper
 from .serializers import PaperSerializer
 
 
-class PaperViewSet(viewsets.ModelViewSet):
-    queryset = Paper.objects.filter(is_published=True)
+class PaperViewSet(ReadOnlyModelViewSet):
+    """Published papers only. Uploads stay out of this database until a later publish step."""
+
     serializer_class = PaperSerializer
     lookup_field = "slug"
-    permission_classes = [IsAuthenticatedOrReadOnly]
+    permission_classes = [AllowAny]
 
-    def get_permissions(self):
-        if self.action in {"list", "retrieve"}:
-            return [AllowAny()]
-        return super().get_permissions()
+    def get_queryset(self):
+        return Paper.objects.matching(self.request.query_params.get("q", ""))

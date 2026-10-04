@@ -1,10 +1,13 @@
 ---
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import PageHero from "../../components/PageHero.astro";
+import { posterConferences } from "../../data/conferences";
 import { professionalPages } from "../../data/programs";
 
 export function getStaticPaths() {
-  return professionalPages.map((page) => ({ params: { slug: page.slug }, props: { page } }));
+  return professionalPages
+    .filter((page) => page.slug !== "webinars")
+    .map((page) => ({ params: { slug: page.slug }, props: { page } }));
 }
 
 const { page } = Astro.props;
@@ -24,5 +27,23 @@ const { page } = Astro.props;
         )}
       </section>
     ))}
+    {page.slug === "poster-presentations" && (
+      <section>
+        <h2>Conferences with poster sessions</h2>
+        <p>
+          These meetings are active, hold poster sessions at least once a year, and accept bioinformatics papers.
+          Each link is the conference’s own page.
+        </p>
+        <ul class="mt-4 space-y-4">
+          {posterConferences.map((conference) => (
+            <li>
+              <a class="font-semibold text-brand-700" href={conference.href}>{conference.name}</a>
+              <span class="text-slate-500"> · {conference.region}</span>
+              <p>{conference.detail}</p>
+            </li>
+          ))}
+        </ul>
+      </section>
+    )}
   </div>
 </BaseLayout>
