@@ -1,4 +1,5 @@
-import { categoryMeta, papers, type PaperCategory } from "./papers";
+import { placeholderStudies } from "./placeholder-studies.ts";
+import { categoryMeta, papers, type PaperCategory } from "./papers.ts";
 
 export type NavLink = {
   label: string;
@@ -16,13 +17,16 @@ const categoryOrder: PaperCategory[] = ["biomedical-ai", "visual", "cancer"];
 export const projectGroups: NavGroup[] = categoryOrder
   .map((category) => {
     const meta = categoryMeta[category];
-    const items = papers
+    const placeholders = placeholderStudies
+      .filter((study) => study.category === category)
+      .map((study) => ({ label: study.label, href: study.href }));
+    const published = papers
       .filter((paper) => paper.category === category && paper.published !== false)
       .map((paper) => ({
         label: paper.navLabel,
         href: `/projects/${paper.category}/${paper.slug}`,
       }));
-    return { label: meta.label, href: meta.href, items };
+    return { label: meta.label, href: meta.href, items: [...placeholders, ...published] };
   })
   .filter((group) => group.items.length > 0);
 

@@ -1,15 +1,22 @@
 ---
 import PaperView from "../../../components/PaperView.astro";
-import { papers } from "../../../data/papers";
+import PlaceholderStudyView from "../../../components/PlaceholderStudyView.astro";
+import { placeholderStudies, type PlaceholderStudy } from "../../../data/placeholder-studies";
+import { papers, type Paper } from "../../../data/papers";
 
 export function getStaticPaths() {
-  return papers.map((paper) => ({
+  const published = papers.map((paper) => ({
     params: { category: paper.category, slug: paper.slug },
-    props: { paper },
+    props: { paper, study: null as PlaceholderStudy | null },
   }));
+  const placeholders = placeholderStudies.map((study) => ({
+    params: { category: study.category, slug: study.slug },
+    props: { paper: null as Paper | null, study },
+  }));
+  return [...published, ...placeholders];
 }
 
-const { paper } = Astro.props;
+const { paper, study } = Astro.props;
 ---
 
-<PaperView paper={paper} />
+{paper ? <PaperView paper={paper} /> : study ? <PlaceholderStudyView study={study} /> : null}
