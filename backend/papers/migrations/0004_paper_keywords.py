@@ -27,7 +27,26 @@ GBM_KEYWORDS = [
 def drop_placeholder_papers(apps, schema_editor):
     Paper = apps.get_model("papers", "Paper")
     Paper.objects.filter(slug__in=PLACEHOLDER_SLUGS).delete()
-    Paper.objects.filter(slug="gbm-signatures", keywords=[]).update(keywords=GBM_KEYWORDS)
+    Paper.objects.update_or_create(
+        slug="gbm-signatures",
+        defaults={
+            "category": "biomedical-ai",
+            "title": "Biomedical Oncology Application of Gene Co-expression Networks in Glioblastoma Multiforme",
+            "subtitle": "Four graph-theoretic signatures that separate glioblastoma networks from normal brain",
+            "authors": "Adityakrishna SreeRamachandrarao, Anusha Lakshmi Dharmavathi, and Satyavathi Dronamraju",
+            "year": None,
+            "doi": "",
+            "sku": "paper-gbm-signatures",
+            "price": "29.00",
+            "abstract": (
+                "This paper treats glioblastoma as a network-level disorder rather than a short list of mutations. "
+                "Four signatures separate the networks, including Ramsey substructure and the signed Laplacian spectrum."
+            ),
+            "keywords": GBM_KEYWORDS,
+            "pdf_filename": "gene-co-expression-networks-in-glioblastoma-multiforme.pdf",
+            "is_published": True,
+        },
+    )
 
 
 class Migration(migrations.Migration):

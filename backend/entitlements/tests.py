@@ -14,17 +14,21 @@ from .snipcart import token_is_valid
 
 
 def paper():
-    return Paper.objects.create(
+    row, _created = Paper.objects.update_or_create(
         slug="gbm-signatures",
-        category=Paper.Category.BIOMEDICAL_AI,
-        title="Gene co-expression networks in glioblastoma",
-        authors="A. SreeRamachandrarao, A. L. Dharmavathi, and S. Dronamraju",
-        year=None,
-        sku="paper-gbm-signatures",
-        price="29.00",
-        abstract="Network signatures.",
-        pdf_filename="gene-co-expression-networks-in-glioblastoma-multiforme.pdf",
+        defaults={
+            "category": Paper.Category.BIOMEDICAL_AI,
+            "title": "Gene co-expression networks in glioblastoma",
+            "authors": "A. SreeRamachandrarao, A. L. Dharmavathi, and S. Dronamraju",
+            "year": None,
+            "sku": "paper-gbm-signatures",
+            "price": "29.00",
+            "abstract": "Network signatures.",
+            "pdf_filename": "gene-co-expression-networks-in-glioblastoma-multiforme.pdf",
+            "is_published": True,
+        },
     )
+    return row
 
 
 class SnipcartWebhookTests(TestCase):

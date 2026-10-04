@@ -44,7 +44,7 @@ class SubmissionPrivacyTests(TestCase):
         self.assertEqual(download["Content-Type"], "application/pdf")
         self.assertTrue(pdf_bytes(download).startswith(b"%PDF-"))
         self.assertFalse(Paper.objects.filter(title="Co-expression notes").exists())
-        self.assertEqual(Paper.objects.count(), 0)
+        self.assertEqual(list(Paper.objects.values_list("slug", flat=True)), ["gbm-signatures"])
 
     def test_other_visitors_cannot_list_or_download(self):
         with verified_session("author@example.com", "Author One") as token:

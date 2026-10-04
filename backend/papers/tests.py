@@ -19,7 +19,9 @@ def make_paper(**overrides):
         "is_published": True,
     }
     payload.update(overrides)
-    return Paper.objects.create(**payload)
+    slug = payload.pop("slug")
+    row, _created = Paper.objects.update_or_create(slug=slug, defaults=payload)
+    return row
 
 
 class HealthTests(TestCase):
@@ -87,3 +89,20 @@ class PublishedPaperSearchTests(TestCase):
         call_command("seed_papers")
         self.assertEqual(list(Paper.objects.values_list("slug", flat=True)), ["gbm-signatures"])
         self.assertTrue(Paper.objects.get(slug="gbm-signatures").is_published)
+
+
+class CatalogMigrationTests(TestCase):
+    def test_migrate_leaves_only_the_published_glioblastoma_paper(self):
+        paper = Paper.objects.get(slug="gbm-signatures")
+        self.assertTrue(paper.is_published)
+        self.assertIn("signed-laplacian", paper.keywords)
+        response = self.client.get("/api/papers/?q=signed-laplacian")
+        self.assertEqual([row["slug"] for row in response.json()], ["gbm-signatures"])
+        self.assertEqual(self.client.get("/api/papers/?q=xylophone-quarantine").json(), [])
+        self.assertFalse(Paper.objects.filter(slug__in=[
+            "nilearn-image-paper",
+            "uveal-melanoma",
+            "diabetic-retinopathy",
+            "lung-paper",
+            "colon-cancer-paper",
+        ]).exists())
