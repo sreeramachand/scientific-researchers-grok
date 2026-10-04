@@ -24,7 +24,7 @@ const panels = [
       <ul id="purchased-list" class="mt-4 space-y-3"></ul>
       <p id="purchased-empty" class="mt-4 text-sm text-slate-600">Papers you purchase appear here.</p>
     </section>
-    <div class="mt-8 grid gap-6 lg:grid-cols-[16rem_1fr]">
+    <div class="mt-8 grid min-w-0 gap-6 lg:grid-cols-[16rem_minmax(0,1fr)]">
       <nav class="card h-fit p-3" aria-label="Dashboard sections">
         {panels.map((panel, index) => (
           <button
@@ -37,7 +37,7 @@ const panels = [
           </button>
         ))}
       </nav>
-      <div>
+      <div class="min-w-0">
         <section class="dash-panel card p-6" data-panel="awards">
           <h2 class="font-serif text-2xl">Active Awards</h2>
           {awards.length === 0 ? (
@@ -53,7 +53,7 @@ const panels = [
             </ul>
           )}
         </section>
-        <section class="dash-panel card hidden p-6" data-panel="projects">
+        <section class="dash-panel card hidden min-w-0 p-6" data-panel="projects">
           <div class="flex items-start justify-between gap-4">
             <div>
               <h2 class="font-serif text-2xl">Projects</h2>
@@ -72,12 +72,12 @@ const panels = [
               +
             </button>
           </div>
-          <div id="latex-panel" class="mt-6 hidden rounded-xl border border-slate-200 p-4" hidden>
+          <div id="latex-panel" class="mt-6 hidden min-w-0 max-w-full rounded-xl border border-slate-200 p-4" hidden>
             <h3 class="font-serif text-2xl">Submit a LaTeX-generated PDF</h3>
             <p class="mt-2 text-sm leading-6 text-slate-600">
               The file is stored privately, the same way full papers are kept off the public site. It shows under Submissions for you and for the reviewer. It is not a project and it is not in the paper database until a later request publishes it.
             </p>
-            <ol class="mt-6 space-y-6">
+            <ol class="mt-6 min-w-0 space-y-6">
               {latexSetup.map((step, index) => (
                 <li>
                   <p class="font-semibold">{index + 1}. {step.title}</p>
@@ -88,7 +88,7 @@ const panels = [
                     </p>
                   )}
                   {step.commands && (
-                    <pre class="mt-2 overflow-x-auto rounded-xl bg-slate-950 p-4 text-sm text-slate-100"><code>{step.commands.join("\n")}</code></pre>
+                    <pre class="mt-2 max-w-full overflow-x-hidden whitespace-pre-wrap break-all rounded-xl bg-slate-950 p-4 text-sm text-slate-100"><code>{step.commands.join("\n")}</code></pre>
                   )}
                 </li>
               ))}
@@ -98,14 +98,14 @@ const panels = [
               VS Code and WSL: <a class="font-semibold text-brand-700" href="https://code.visualstudio.com/docs/remote/wsl">Developing in WSL</a>.
               Ubuntu in the Store: <a class="font-semibold text-brand-700" href="https://apps.microsoft.com/detail/9pdxgncfsczv">Ubuntu</a>.
             </p>
-            <form id="latex-form" class="mt-6 grid gap-4">
-              <label class="field">
+            <form id="latex-form" class="mt-6 grid min-w-0 gap-4">
+              <label class="field min-w-0">
                 <span>Title, if you have one</span>
-                <input id="submission-title" name="title" maxlength="200" />
+                <input id="submission-title" class="min-w-0 max-w-full" name="title" maxlength="200" />
               </label>
-              <label class="field">
+              <label class="field min-w-0">
                 <span>LaTeX PDF</span>
-                <input id="submission-file" name="file" type="file" accept="application/pdf,.pdf" required />
+                <input id="submission-file" class="min-w-0 max-w-full" name="file" type="file" accept="application/pdf,.pdf" required />
               </label>
               <button class="btn btn-primary w-fit" type="submit">Submit PDF</button>
               <p id="submission-status" class="text-sm text-slate-600" role="status"></p>
