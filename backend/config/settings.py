@@ -26,6 +26,9 @@ INSTALLED_APPS = [
     "papers",
     "profiles",
     "entitlements",
+    "webinars",
+    "submissions",
+    "identity",
 ]
 
 MIDDLEWARE = [
@@ -142,3 +145,16 @@ NEON_AUTH_BASE_URL = os.getenv("NEON_AUTH_BASE_URL", "").strip()
 SNIPCART_API_KEY = os.getenv("SNIPCART_API_KEY", "").strip()
 # Full project PDFs. Not served as static files. Download requires a purchase token.
 PAPER_FILES_ROOT = Path(os.getenv("PAPER_FILES_ROOT", BASE_DIR / "private_papers"))
+# LaTeX submissions. Same idea: private directory, not a public static file.
+SUBMISSION_FILES_ROOT = Path(os.getenv("SUBMISSION_FILES_ROOT", BASE_DIR / "private_submissions"))
+
+# Mail goes out only when the server already has EMAIL_HOST. Empty means notices
+# are saved and marked unsent. Do not put a password in this repository.
+EMAIL_HOST = os.getenv("EMAIL_HOST", "").strip()
+EMAIL_PORT = int(os.getenv("EMAIL_PORT", "587") or "587")
+EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER", "")
+EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD", "")
+EMAIL_USE_TLS = os.getenv("EMAIL_USE_TLS", "true").lower() in {"1", "true", "yes"}
+DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL", "hello@scientificresearchers.org")
+DATA_UPLOAD_MAX_MEMORY_SIZE = 26 * 1024 * 1024
+FILE_UPLOAD_MAX_MEMORY_SIZE = 26 * 1024 * 1024

@@ -20,6 +20,9 @@ const items = papersByCategory(category);
 <BaseLayout title={meta.label} description={meta.description}>
   <PageHero kicker="Projects" title={meta.label} lede={meta.description} />
   <section class="mx-auto grid max-w-6xl gap-5 px-4 py-12 lg:px-6">
+    {items.length === 0 ? (
+      <p class="text-slate-600">No published papers in this area yet.</p>
+    ) : null}
     {items.map((paper) => (
       <a href={`/projects/${paper.category}/${paper.slug}`} class="card block p-6">
         <h2 class="font-serif text-2xl">{paper.title}</h2>

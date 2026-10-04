@@ -1,61 +1,29 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
 import PageHero from "../components/PageHero.astro";
-import { faqs } from "../data/site";
+import { awards } from "../data/awards";
 ---
 
-<BaseLayout title="Awards" description="Nomination process, eligibility, award categories, subject domains, and FAQ for Scientific Researchers awards.">
+<BaseLayout title="Awards" description="Awards appear here only after one has been announced.">
   <PageHero
     kicker="Awards"
-    title="Recognize research, teaching, and community science"
-    lede="One awards program. Nominations are free. Use the sections below for process, eligibility, categories, domains, and common questions."
-  >
-    <a class="btn btn-primary mt-8" href="#nomination-process">Start a nomination</a>
-  </PageHero>
-
-  <div class="mx-auto max-w-3xl px-4 py-12 prose-sr lg:px-6">
-    <section id="nomination-process">
-      <h2>Nomination Process</h2>
-      <ol class="list-decimal space-y-2 pl-5 text-slate-600">
-        <li>Confirm the nominee meets Eligibility and pick one Award Category.</li>
-        <li>Collect a two-page statement, a CV or teaching portfolio, and one supporting letter.</li>
-        <li>Submit the packet through the nomination form during the open cycle.</li>
-        <li>Reviewers score independently. The office publishes a shortlist, then winners.</li>
-      </ol>
-    </section>
-    <section id="eligibility">
-      <h2>Eligibility</h2>
-      <p>Nominees must have done the work in the last five years and be able to share a public summary. Students, postdocs, staff scientists, clinicians, and community educators are eligible. Institutional affiliation is welcome but not required. A person may receive only one category in a cycle.</p>
-    </section>
-    <section id="award-categories">
-      <h2>Award Categories</h2>
-      <ul>
-        <li><strong>Early Investigator Award</strong> — first independent or first-author body of work.</li>
-        <li><strong>Methods and Open Tools</strong> — software, checklists, or datasets others can rerun.</li>
-        <li><strong>Community STEAM Prize</strong> — public teaching or outreach with documented reach.</li>
-        <li><strong>Translational Impact</strong> — work that changed a clinic, lab protocol, or guideline.</li>
-      </ul>
-    </section>
-    <section id="subject-domains">
-      <h2>Subject Domains</h2>
-      <p>Nominations must sit in at least one domain we already publish or teach:</p>
-      <ul>
-        <li>Biomedical AI and neuroimaging methods</li>
-        <li>Visual science, ocular oncology, and retinal screening</li>
-        <li>Cancer biology, pathology, and thoracic or colorectal oncology</li>
-        <li>AI/STEAM education and community research literacy</li>
-      </ul>
-    </section>
-    <section id="faq">
-      <h2>FAQ</h2>
-      <div class="mt-4 space-y-3">
-        {faqs.map((item) => (
-          <details class="rounded-2xl border border-slate-200 bg-white p-4">
-            <summary class="cursor-pointer font-semibold text-slate-900">{item.q}</summary>
-            <p class="mt-3 text-slate-600">{item.a}</p>
-          </details>
+    title="Awards"
+    lede="This page stays empty until a real award exists."
+  />
+  <section class="mx-auto max-w-3xl px-4 py-12 lg:px-6">
+    {awards.length === 0 ? (
+      <p id="awards-empty" class="text-slate-600">No awards have been announced.</p>
+    ) : (
+      <ul class="space-y-4">
+        {awards.map((award) => (
+          <li class="card p-6">
+            <p class="text-sm font-semibold text-brand-700">{award.year}</p>
+            <h2 class="mt-1 font-serif text-2xl">{award.title}</h2>
+            <p class="mt-2 font-semibold">{award.recipient}</p>
+            <p class="mt-2 text-slate-600">{award.summary}</p>
+          </li>
         ))}
-      </div>
-    </section>
-  </div>
+      </ul>
+    )}
+  </section>
 </BaseLayout>

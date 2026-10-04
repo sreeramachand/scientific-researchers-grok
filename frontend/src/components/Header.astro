@@ -5,6 +5,7 @@ import {
   professionalLinks,
   profileLinks,
   projectGroups,
+  projectsMore,
 } from "../data/nav";
 import { site } from "../data/site";
 
@@ -39,6 +40,10 @@ const path = Astro.url.pathname;
               </div>
             ))}
           </div>
+          <a class="mt-4 flex items-center gap-2 rounded-lg px-2 py-2 text-sm font-semibold text-brand-700 hover:bg-slate-50" href={projectsMore.href}>
+            {projectsMore.label}
+            <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M8.2 4.2a1 1 0 0 1 1.4 0l5 5a1 1 0 0 1 0 1.4l-5 5a1 1 0 0 1-1.4-1.4L12.5 10 8.2 5.6a1 1 0 0 1 0-1.4Z" clip-rule="evenodd" /></svg>
+          </a>
         </div>
       </div>
 
@@ -129,6 +134,10 @@ const path = Astro.url.pathname;
               ))}
             </div>
           ))}
+          <a class="flex items-center gap-2 py-1 text-sm font-semibold text-brand-700" href={projectsMore.href}>
+            {projectsMore.label}
+            <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M8.2 4.2a1 1 0 0 1 1.4 0l5 5a1 1 0 0 1 0 1.4l-5 5a1 1 0 0 1-1.4-1.4L12.5 10 8.2 5.6a1 1 0 0 1 0-1.4Z" clip-rule="evenodd" /></svg>
+          </a>
         </div>
       </details>
       <details>

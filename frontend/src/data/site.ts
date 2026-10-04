@@ -74,43 +74,6 @@ export const pricing = [
   },
 ] as const;
 
-export const dashboardDemo = {
-  awards: [
-    {
-      name: "Early Investigator Award",
-      status: "Under review",
-      cycle: "2026 cycle",
-      due: "Nomination packet received 12 Mar 2026",
-    },
-    {
-      name: "Community STEAM Prize",
-      status: "Eligible to nominate",
-      cycle: "2026 cycle",
-      due: "Closes 1 Jun 2026",
-    },
-  ],
-  projects: [
-    { title: "Gene co-expression networks in glioblastoma", role: "Corresponding author", status: "Published" },
-    { title: "Diabetic retinopathy screening models", role: "Collaborator", status: "In revision" },
-  ],
-  submissions: [
-    { title: "Workshop abstract: AI in county libraries", venue: "Outreach Events", status: "Accepted" },
-    { title: "Poster: Nilearn QC dashboard", venue: "Professional Development", status: "Camera-ready due" },
-  ],
-  publications: [
-    { title: "Imaging biomarkers in uveal melanoma", year: "2024", href: "/projects/visual/uveal-melanoma" },
-    { title: "Colon cancer paper", year: "2024", href: "/projects/cancer/colon-cancer-paper" },
-  ],
-  webinars: [
-    { title: "Reporting checklists for biomedical AI", date: "8 Oct 2026", href: "/professional-development/webinars" },
-    { title: "Poster clinic: figures that survive review", date: "19 Nov 2026", href: "/professional-development/webinars" },
-  ],
-  posters: [
-    { title: "Nilearn multi-site maps", event: "Imaging Methods Meeting", href: "/professional-development/poster-presentations" },
-    { title: "Referable DR operating points", event: "Visual Science Forum", href: "/professional-development/poster-presentations" },
-  ],
-};
-
 export const faqs = [
   {
     q: "Who can be nominated for an award?",

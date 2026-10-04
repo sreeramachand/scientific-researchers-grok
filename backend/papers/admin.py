@@ -7,4 +7,4 @@ from .models import Paper
 class PaperAdmin(admin.ModelAdmin):
     list_display = ("title", "category", "sku", "price", "year", "is_published")
     list_filter = ("category", "is_published", "year")
-    search_fields = ("title", "slug", "sku", "doi")
+    search_fields = ("title", "slug", "sku", "doi", "authors", "abstract")
