@@ -1,15 +1,14 @@
 ---
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import PageHero from "../../components/PageHero.astro";
-import { latexSetup } from "../../data/latex-setup";
 import { categoryMeta, papers } from "../../data/papers";
 ---
 
-<BaseLayout title="Projects" description="Search published papers and submit a LaTeX PDF. Unpublished uploads stay private.">
+<BaseLayout title="Projects" description="Search published papers by title, authors, abstract, or keywords.">
   <PageHero
     kicker="Projects"
     title="The research catalog"
-    lede="Search the published paper database by title, authors, abstract, or keywords. The catalog starts with the glioblastoma paper. A PDF you upload stays in Submissions until it is published."
+    lede="Search the published paper database by title, authors, abstract, or keywords. The catalog starts with the glioblastoma paper."
   />
   <section class="mx-auto max-w-6xl px-4 py-12 lg:px-6">
     <div class="grid gap-5 md:grid-cols-3">
@@ -50,73 +49,10 @@ import { categoryMeta, papers } from "../../data/papers";
         </a>
       ))}
     </div>
-
-    <section id="submit" class="mt-12">
-      <div class="flex items-start justify-between gap-4">
-        <div>
-          <h2 class="font-serif text-3xl">Projects</h2>
-          <p id="projects-empty" class="mt-2 max-w-2xl text-slate-600">
-            No projects are listed here yet. Unpublished uploads do not appear in this list or in the paper database.
-          </p>
-        </div>
-        <button
-          id="add-project"
-          type="button"
-          class="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-gradient-to-br from-cyan-500 to-brand-600 text-2xl font-semibold text-white shadow-lg"
-          aria-expanded="false"
-          aria-controls="latex-panel"
-        >
-          <span class="sr-only">Submit a LaTeX PDF</span>
-          +
-        </button>
-      </div>
-
-      <div id="latex-panel" class="card mt-6 hidden p-6" hidden>
-        <h3 class="font-serif text-2xl">Submit a LaTeX-generated PDF</h3>
-        <p class="mt-2 text-sm leading-6 text-slate-600">
-          The file is stored privately, the same way full papers are kept off the public site. It shows under Submissions for you and for the reviewer. It is not a project and it is not in the paper database until a later request publishes it.
-        </p>
-        <ol class="mt-6 space-y-6">
-          {latexSetup.map((step, index) => (
-            <li>
-              <p class="font-semibold">{index + 1}. {step.title}</p>
-              <p class="mt-1 text-sm leading-6 text-slate-600">{step.body}</p>
-              {step.href && (
-                <p class="mt-2 text-sm">
-                  <a class="font-semibold text-brand-700" href={step.href}>{step.hrefLabel}</a>
-                </p>
-              )}
-              {step.commands && (
-                <pre class="mt-2 overflow-x-auto rounded-xl bg-slate-950 p-4 text-sm text-slate-100"><code>{step.commands.join("\n")}</code></pre>
-              )}
-            </li>
-          ))}
-        </ol>
-        <p class="mt-4 text-sm text-slate-600">
-          LaTeX Workshop’s WSL notes: <a class="font-semibold text-brand-700" href="https://github.com/James-Yu/LaTeX-Workshop/wiki/Install">Install guide</a>.
-          VS Code and WSL: <a class="font-semibold text-brand-700" href="https://code.visualstudio.com/docs/remote/wsl">Developing in WSL</a>.
-          Ubuntu in the Store: <a class="font-semibold text-brand-700" href="https://apps.microsoft.com/detail/9pdxgncfsczv">Ubuntu</a>.
-        </p>
-        <form id="latex-form" class="mt-6 grid gap-4">
-          <label class="field">
-            <span>Title, if you have one</span>
-            <input id="submission-title" name="title" maxlength="200" />
-          </label>
-          <label class="field">
-            <span>LaTeX PDF</span>
-            <input id="submission-file" name="file" type="file" accept="application/pdf,.pdf" required />
-          </label>
-          <button class="btn btn-primary w-fit" type="submit">Submit PDF</button>
-          <p id="submission-status" class="text-sm text-slate-600" role="status"></p>
-        </form>
-      </div>
-    </section>
   </section>
 </BaseLayout>
 
 <script>
-  import { apiFetch } from "../../lib/api";
-  import { getSession, readSession } from "../../lib/auth";
   import { papers } from "../../data/papers";
   import { searchPapers } from "../../lib/paper-search";
 
@@ -135,63 +71,5 @@ import { categoryMeta, papers } from "../../data/papers";
   document.getElementById("paper-search-form")?.addEventListener("submit", (event) => {
     event.preventDefault();
     applySearch(input?.value ?? "");
-  });
-
-  const add = document.getElementById("add-project");
-  const panel = document.getElementById("latex-panel");
-  add?.addEventListener("click", () => {
-    const open = panel?.hasAttribute("hidden") ?? true;
-    if (open) {
-      panel?.removeAttribute("hidden");
-      panel?.classList.remove("hidden");
-      add.setAttribute("aria-expanded", "true");
-    } else {
-      panel?.setAttribute("hidden", "");
-      panel?.classList.add("hidden");
-      add.setAttribute("aria-expanded", "false");
-    }
-  });
-
-  const status = document.getElementById("submission-status");
-  document.getElementById("latex-form")?.addEventListener("submit", async (event) => {
-    event.preventDefault();
-    const user = (await getSession()) ?? readSession();
-    if (!user) {
-      const next = encodeURIComponent("/projects#submit");
-      window.location.assign(`/login?next=${next}`);
-      return;
-    }
-    const fileInput = document.getElementById("submission-file") as HTMLInputElement | null;
-    const file = fileInput?.files?.[0];
-    if (!file) {
-      if (status) status.textContent = "Choose a LaTeX-generated PDF.";
-      return;
-    }
-    const body = new FormData();
-    const title = (document.getElementById("submission-title") as HTMLInputElement | null)?.value.trim() ?? "";
-    if (title) body.set("title", title);
-    body.set("file", file);
-    if (status) status.textContent = "Uploading…";
-    try {
-      const response = await apiFetch("/api/submissions/", { method: "POST", body });
-      const payload = (await response.json().catch(() => ({}))) as {
-        detail?: string;
-        notification_sent?: boolean;
-        notification_error?: string;
-      };
-      if (!response.ok) {
-        if (status) status.textContent = payload.detail ?? "The PDF was not stored.";
-        return;
-      }
-      const mail = payload.notification_sent
-        ? "The office was notified."
-        : payload.notification_error || "The office email notice was not sent.";
-      if (status) {
-        status.textContent = `Saved under Submissions. It is not public and it is not in the paper database. ${mail}`;
-      }
-      if (fileInput) fileInput.value = "";
-    } catch {
-      if (status) status.textContent = "The PDF was not stored. Check that the API is reachable and try again.";
-    }
   });
 </script>

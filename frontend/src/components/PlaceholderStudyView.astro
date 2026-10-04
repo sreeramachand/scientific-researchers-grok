@@ -1,0 +1,28 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import PageHero from "./PageHero.astro";
+import type { PlaceholderStudy } from "../data/placeholder-studies";
+
+interface Props {
+  study: PlaceholderStudy;
+}
+
+const { study } = Astro.props;
+---
+
+<BaseLayout
+  title={study.label}
+  description={`${study.label} is a placeholder. The full paper is not published yet.`}
+>
+  <PageHero
+    kicker="Projects"
+    title={study.label}
+    lede="This study is a placeholder. The full paper is not published yet."
+  />
+  <section class="mx-auto max-w-6xl px-4 py-12 lg:px-6">
+    <p class="max-w-2xl text-slate-600">
+      The full paper will be posted here when it is uploaded. This page is not a published paper, and it is not in the paper database.
+    </p>
+    <a class="btn btn-secondary mt-6" href="/projects">Back to projects</a>
+  </section>
+</BaseLayout>
